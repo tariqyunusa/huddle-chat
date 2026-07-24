@@ -1,11 +1,9 @@
+import ChatView from "./chatView"
 
 function App() {
- 
 
-  return (
-   <>
-   </>
-  )
+
+  return <ChatView/>
 }
 
 export default App
