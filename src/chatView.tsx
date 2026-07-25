@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { BACKEND_HOST } from "./api";
 
 type ChatMessage = {
   type: "message" | "thinking" | "error";
@@ -6,18 +7,12 @@ type ChatMessage = {
   content?: string;
 };
 
-const BACKEND_HOST = "huddle-6j42.onrender.com";
-const SESSION_ID = "5def6cd0-5f1c-497d-8311-d30766a50df3"; // hardcoded for Brick F2
-const DISPLAY_NAME = "WebUser"; // hardcoded for now — becomes dynamic in Brick F3/F5
-
-// Distinct palette for other participants — deterministic per name, not random per message
 const PARTICIPANT_COLORS = [
-  "bg-emerald-700",
-  "bg-amber-700",
-  "bg-rose-700",
-  "bg-violet-700",
-  "bg-cyan-700",
-  "bg-orange-700",
+  "text-emerald-700",
+  "text-amber-700",
+  "text-rose-700",
+  "text-violet-700",
+  "text-cyan-700",
 ];
 
 function colorForAuthor(name: string): string {
@@ -25,11 +20,15 @@ function colorForAuthor(name: string): string {
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
-  const index = Math.abs(hash) % PARTICIPANT_COLORS.length;
-  return PARTICIPANT_COLORS[index];
+  return PARTICIPANT_COLORS[Math.abs(hash) % PARTICIPANT_COLORS.length];
 }
 
-export default function ChatView() {
+type ChatViewProps = {
+  sessionId: string;
+  displayName: string;
+};
+
+export default function ChatView({ sessionId, displayName }: ChatViewProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
@@ -37,8 +36,9 @@ export default function ChatView() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setMessages([]);
     const ws = new WebSocket(
-      `wss://${BACKEND_HOST}/ws/session/${SESSION_ID}?display_name=${DISPLAY_NAME}`,
+      `wss://${BACKEND_HOST}/ws/session/${sessionId}?display_name=${displayName}`
     );
     wsRef.current = ws;
 
@@ -53,7 +53,7 @@ export default function ChatView() {
     };
 
     return () => ws.close();
-  }, []);
+  }, [sessionId, displayName]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -67,40 +67,38 @@ export default function ChatView() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-stone-950 text-stone-100">
-      <header className="border-b border-stone-800 px-6 py-4">
-        <h1 className="text-lg font-semibold tracking-tight">Huddle</h1>
-        <p className="text-sm text-stone-500">Talon is in this session</p>
+    <div className="flex flex-col h-screen bg-white">
+      <header className="border-b border-stone-200 px-6 py-3">
+        <p className="text-sm font-medium text-stone-700">Talon</p>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
-        {messages.map((msg, i) => (
-          <MessageBubble
-            key={i}
-            msg={msg}
-            isSelf={msg.author === DISPLAY_NAME}
-          />
-        ))}
-        {thinking && (
-          <div className="text-sm text-stone-500 italic">
-            Talon is thinking…
-          </div>
-        )}
-        <div ref={bottomRef} />
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-2xl mx-auto px-6 py-6 space-y-5">
+          {messages.map((msg, i) => (
+            <MessageRow key={i} msg={msg} isSelf={msg.author === displayName} />
+          ))}
+          {thinking && (
+            <div className="flex items-center gap-2 text-sm text-stone-400">
+              <span className="font-medium text-stone-500">Talon</span>
+              <span className="italic">is thinking…</span>
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
       </div>
 
-      <div className="w-full px-6 py-4 flex justify-center items-center gap-3">
-        <div className="w-full sm:w-[70%] flex justify-center items-center gap-3">
+      <div className="border-t border-stone-200 px-6 py-4">
+        <div className="max-w-2xl mx-auto flex items-center gap-3">
           <input
-            className="flex-1 bg-stone-900 border border-stone-700 rounded-2xl px-4 py-2 text-sm outline-none focus:border-stone-500"
+            className="flex-1 bg-stone-50 border border-stone-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-stone-500"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            placeholder="Send a message…"
+            placeholder="Message the session…"
           />
           <button
             onClick={sendMessage}
-            className="bg-stone-100 text-stone-900 rounded-2xl  rounded-2xl px-4 py-2 text-sm font-medium hover:bg-white transition-colors"
+            className="bg-stone-800 text-white rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-stone-900 transition-colors"
           >
             Send
           </button>
@@ -110,29 +108,29 @@ export default function ChatView() {
   );
 }
 
-function MessageBubble({ msg, isSelf }: { msg: ChatMessage; isSelf: boolean }) {
+function MessageRow({ msg, isSelf }: { msg: ChatMessage; isSelf: boolean }) {
   const isTalon = msg.author === "Talon";
 
-  let bubbleColor: string;
   if (isSelf) {
-    bubbleColor = "bg-blue-600";
-  } else if (isTalon) {
-    bubbleColor = "bg-stone-800 border border-stone-600";
-  } else {
-    bubbleColor = colorForAuthor(msg.author ?? "");
+    return (
+      <div className="flex justify-end">
+        <div className="max-w-lg bg-stone-100 rounded-2xl px-4 py-2.5 text-sm text-stone-800">
+          {msg.content}
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className={`flex flex-col ${isSelf ? "items-end" : "items-start"}`}>
-      <span className="text-xs text-stone-500 mb-1 flex items-center gap-1">
-        {isTalon && <span className="text-amber-400">★</span>}
+    <div className="flex flex-col gap-1">
+      <span
+        className={`text-sm font-medium ${
+          isTalon ? "text-stone-800" : colorForAuthor(msg.author ?? "")
+        }`}
+      >
         {msg.author}
       </span>
-      <div
-        className={`max-w-lg rounded-2xl px-4 py-2 text-sm text-white ${bubbleColor}`}
-      >
-        {msg.content}
-      </div>
+      <p className="text-sm text-stone-700 leading-relaxed">{msg.content}</p>
     </div>
   );
 }
