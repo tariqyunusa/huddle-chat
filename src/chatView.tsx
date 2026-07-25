@@ -37,8 +37,9 @@ export default function ChatView({ sessionId, displayName }: ChatViewProps) {
 
   useEffect(() => {
     setMessages([]);
+    const userId = localStorage.getItem("huddle_user_id");
     const ws = new WebSocket(
-      `wss://${BACKEND_HOST}/ws/session/${sessionId}?display_name=${displayName}`
+      `wss://${BACKEND_HOST}/ws/session/${sessionId}?display_name=${displayName}&user_id=${userId}`
     );
     wsRef.current = ws;
 
