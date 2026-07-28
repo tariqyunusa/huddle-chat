@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { BACKEND_HOST } from "./api";
+import {Plus} from 'lucide-react'
 
 type ChatMessage = {
   type: "message" | "thinking" | "error";
@@ -69,8 +70,12 @@ export default function ChatView({ sessionId, displayName }: ChatViewProps) {
 
   return (
     <div className="flex flex-col h-screen bg-white">
-      <header className="border-b border-stone-200 px-6 py-3">
+      <header className="border-b border-stone-200 px-6 py-3 flex justify-between items-center">
         <p className="text-sm font-medium text-stone-700">Talon</p>
+        <div>
+          <div><Plus size={16}/></div>
+          
+        </div>
       </header>
 
       <div className="flex-1 overflow-y-auto">
