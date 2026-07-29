@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { BACKEND_HOST } from "./api";
-import {Plus} from 'lucide-react'
+import { BACKEND_HOST, fetchParticipants, type Participant } from "./api";
+import { Plus } from "lucide-react";
 
 type ChatMessage = {
   type: "message" | "thinking" | "error";
@@ -9,19 +9,32 @@ type ChatMessage = {
 };
 
 const PARTICIPANT_COLORS = [
-  "text-emerald-700",
-  "text-amber-700",
-  "text-rose-700",
-  "text-violet-700",
-  "text-cyan-700",
+  { text: "text-emerald-700", bg: "bg-emerald-700" },
+  { text: "text-amber-700", bg: "bg-amber-700" },
+  { text: "text-rose-700", bg: "bg-rose-700" },
+  { text: "text-violet-700", bg: "bg-violet-700" },
+  { text: "text-cyan-700", bg: "bg-cyan-700" },
 ];
 
-function colorForAuthor(name: string): string {
+function colorForAuthor(name: string) {
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
   return PARTICIPANT_COLORS[Math.abs(hash) % PARTICIPANT_COLORS.length];
+}
+
+function Avatar({ name }: { name: string }) {
+  const initial = name.charAt(0).toUpperCase();
+  const colorClass = colorForAuthor(name).bg;
+  return (
+    <div
+      className={`w-7 h-7 rounded-full ${colorClass} text-white text-xs font-medium flex items-center justify-center border-2 border-white`}
+      title={name}
+    >
+      {initial}
+    </div>
+  );
 }
 
 type ChatViewProps = {
@@ -32,6 +45,7 @@ type ChatViewProps = {
 export default function ChatView({ sessionId, displayName }: ChatViewProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  const [participants, setParticipants] = useState<Participant[]>([]);
   const [thinking, setThinking] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -40,7 +54,7 @@ export default function ChatView({ sessionId, displayName }: ChatViewProps) {
     setMessages([]);
     const userId = localStorage.getItem("huddle_user_id");
     const ws = new WebSocket(
-      `wss://${BACKEND_HOST}/ws/session/${sessionId}?display_name=${displayName}&user_id=${userId}`
+      `wss://${BACKEND_HOST}/ws/session/${sessionId}?display_name=${displayName}&user_id=${userId}`,
     );
     wsRef.current = ws;
 
@@ -58,6 +72,12 @@ export default function ChatView({ sessionId, displayName }: ChatViewProps) {
   }, [sessionId, displayName]);
 
   useEffect(() => {
+    fetchParticipants(sessionId)
+      .then(setParticipants)
+      .catch((err) => console.error("Failed to load participants:", err));
+  }, [sessionId]);
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, thinking]);
 
@@ -72,9 +92,15 @@ export default function ChatView({ sessionId, displayName }: ChatViewProps) {
     <div className="flex flex-col h-screen bg-white">
       <header className="border-b border-stone-200 px-6 py-3 flex justify-between items-center">
         <p className="text-sm font-medium text-stone-700">Talon</p>
-        <div>
-          <div><Plus size={16}/></div>
-          
+        <div className="flex items-center gap-3">
+          <div className="flex -space-x-2">
+            {participants.map((p) => (
+              <Avatar key={p.user_id} name={p.display_name} />
+            ))}
+          </div>
+          <button className="outline-none border-none cursor-pointer">
+            <Plus size={16} />
+          </button>
         </div>
       </header>
 
@@ -131,7 +157,7 @@ function MessageRow({ msg, isSelf }: { msg: ChatMessage; isSelf: boolean }) {
     <div className="flex flex-col gap-1">
       <span
         className={`text-sm font-medium ${
-          isTalon ? "text-stone-800" : colorForAuthor(msg.author ?? "")
+          isTalon ? "text-stone-800" : colorForAuthor(msg.author ?? "").text
         }`}
       >
         {msg.author}

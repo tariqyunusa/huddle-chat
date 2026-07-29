@@ -3,6 +3,11 @@ import SignupForm from "./SignupForm";
 import ChatView from "./chatView";
 import { fetchSessions, createSession, type SessionSummary } from "./api";
 
+function getSessionFromUrl(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("session");
+}
+
 function App() {
   const [userId, setUserId] = useState<string | null>(
     localStorage.getItem("huddle_user_id")
@@ -11,7 +16,9 @@ function App() {
     localStorage.getItem("huddle_display_name") ?? "Anonymous"
   );
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(
+    getSessionFromUrl()
+  );
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -21,13 +28,20 @@ function App() {
       .catch((err) => console.error("Failed to load sessions:", err));
   }, [userId]);
 
+  function openSession(id: string) {
+    setActiveSessionId(id);
+    const url = new URL(window.location.href);
+    url.searchParams.set("session", id);
+    window.history.pushState({}, "", url);
+  }
+
   async function handleCreateSession() {
     if (!userId) return;
     setCreating(true);
     try {
       const newSession = await createSession(userId, "New session");
       setSessions((prev) => [newSession, ...prev]);
-      setActiveSessionId(newSession.id);
+      openSession(newSession.id);
     } catch (err) {
       console.error("Failed to create session:", err);
     } finally {
@@ -41,7 +55,6 @@ function App() {
 
   return (
     <div className="flex h-screen bg-white text-stone-800">
-      {/* Sidebar */}
       <aside className="w-64 bg-stone-50 border-r border-stone-200 flex flex-col">
         <div className="px-3 py-3">
           <button
@@ -64,7 +77,7 @@ function App() {
           {sessions.map((s) => (
             <button
               key={s.id}
-              onClick={() => setActiveSessionId(s.id)}
+              onClick={() => openSession(s.id)}
               className={`w-full text-left px-3 py-2 rounded-lg text-sm truncate transition-colors ${
                 activeSessionId === s.id
                   ? "bg-stone-200 text-stone-900"
@@ -81,7 +94,6 @@ function App() {
         </div>
       </aside>
 
-      {/* Center */}
       <main className="flex-1 flex flex-col">
         {activeSessionId ? (
           <ChatView sessionId={activeSessionId} displayName={displayName} />

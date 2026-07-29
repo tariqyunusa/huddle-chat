@@ -8,6 +8,11 @@ export type SessionSummary = {
   created_at: string;
 };
 
+export type Participant = {
+  user_id: string;
+  display_name: string;
+};
+
 export async function signup(email: string, name: string): Promise<{ id: string }> {
   const res = await fetch(`${BASE_URL}/users`, {
     method: "POST",
@@ -31,6 +36,12 @@ export async function createSession(userId: string, title: string): Promise<Sess
     body: JSON.stringify({ created_by: userId, title }),
   });
   if (!res.ok) throw new Error(`Failed to create session: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchParticipants(sessionId: string): Promise<Participant[]> {
+  const res = await fetch(`${BASE_URL}/sessions/${sessionId}/participants`);
+  if (!res.ok) throw new Error(`Failed to fetch participants: ${res.status}`);
   return res.json();
 }
 
