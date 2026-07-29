@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { BACKEND_HOST, fetchParticipants, type Participant } from "./api";
-import { Plus, Share2, Link2, Mail, MessageCircle, Check } from "lucide-react";
+import { Plus,  Link2, Mail, MessageCircle, Check } from "lucide-react";
 
 type ChatMessage = {
   type: "message" | "thinking" | "error";
