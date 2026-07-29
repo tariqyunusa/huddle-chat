@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { BACKEND_HOST, fetchParticipants, type Participant } from "./api";
-import { Plus } from "lucide-react";
+import { Plus, Share2, Link2, Mail, MessageCircle, Check } from "lucide-react";
 
 type ChatMessage = {
   type: "message" | "thinking" | "error";
@@ -47,8 +47,52 @@ export default function ChatView({ sessionId, displayName }: ChatViewProps) {
   const [input, setInput] = useState("");
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [thinking, setThinking] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const shareMenuRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  function getInviteUrl() {
+    const url = new URL(window.location.href);
+    url.searchParams.set("session", sessionId);
+    return url.toString();
+  }
+
+  function copyInviteLink() {
+    navigator.clipboard.writeText(getInviteUrl());
+    setCopied(true);
+    setShareOpen(false);
+    setTimeout(() => setCopied(false), 1500);
+  }
+
+  function shareViaWhatsApp() {
+    const text = encodeURIComponent(
+      `Join my Huddle session: ${getInviteUrl()}`,
+    );
+    window.open(`https://wa.me/?text=${text}`, "_blank");
+    setShareOpen(false);
+  }
+
+  function shareViaEmail() {
+    const subject = encodeURIComponent("Join my Huddle session");
+    const body = encodeURIComponent(`Join here: ${getInviteUrl()}`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    setShareOpen(false);
+  }
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        shareMenuRef.current &&
+        !shareMenuRef.current.contains(e.target as Node)
+      ) {
+        setShareOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     setMessages([]);
@@ -97,6 +141,41 @@ export default function ChatView({ sessionId, displayName }: ChatViewProps) {
             {participants.map((p) => (
               <Avatar key={p.user_id} name={p.display_name} />
             ))}
+          </div>
+          <div className="relative" ref={shareMenuRef}>
+            <button
+              onClick={() => setShareOpen((prev) => !prev)}
+              className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-stone-600 border border-stone-300 rounded-lg px-3 py-1.5 hover:bg-stone-50 transition-colors"
+            >
+              <Link2 size={14} />
+              Share
+            </button>
+
+            {shareOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border border-stone-200 rounded-xl shadow-lg py-1 z-10">
+                <button
+                  onClick={copyInviteLink}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 transition-colors"
+                >
+                  {copied ? <Check size={14} /> : <Link2 size={14} />}
+                  {copied ? "Copied!" : "Copy link"}
+                </button>
+                <button
+                  onClick={shareViaWhatsApp}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 transition-colors"
+                >
+                  <MessageCircle size={14} />
+                  WhatsApp
+                </button>
+                <button
+                  onClick={shareViaEmail}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 transition-colors"
+                >
+                  <Mail size={14} />
+                  Email
+                </button>
+              </div>
+            )}
           </div>
           <button className="outline-none border-none cursor-pointer">
             <Plus size={16} />
