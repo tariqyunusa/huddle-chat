@@ -24,11 +24,18 @@ export default function SignupForm({ onSignedUp }: { onSignedUp: (userId: string
   }
 
   return (
-    <div className="flex h-screen items-center justify-center bg-stone-950 text-stone-100">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 px-6">
+    <div className="flex h-screen bg-stone-950 text-stone-100 p-4">
+      <div className="w-1/2 relative rounded-2xl">
+        <img src="/bg.webp" alt="intro-image" className="w-full h-full object-cover rounded-2xl"/>
+      </div>
+      <div className="flex flex-col justify-center items-center w-1/2">
+        <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 px-6">
         <h1 className="text-xl font-semibold tracking-tight text-center mb-6">
           Welcome to Huddle
         </h1>
+        <p className="text-base text-gray-500 text-center">
+          Sign in to your account or create a new one to start collaborating in real-time.
+        </p>
         <input
           type="text"
           placeholder="Your name"
@@ -54,6 +61,10 @@ export default function SignupForm({ onSignedUp }: { onSignedUp: (userId: string
           {loading ? "Joining…" : "Continue"}
         </button>
       </form>
+      <div className="absolute bottom-4 text-xs text-stone-500 text-center">
+        <p>Created by <a href="https://tariqyunusa.xyz" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:underline">Tariq Yunusa</a></p>
+      </div>
+      </div>
     </div>
   );
 }
