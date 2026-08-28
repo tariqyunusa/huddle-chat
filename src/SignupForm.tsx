@@ -24,9 +24,9 @@ export default function SignupForm({ onSignedUp }: { onSignedUp: (userId: string
   }
 
   return (
-    <div className="flex h-screen bg-stone-950 text-stone-100 p-4">
+    <div className="flex h-screen bg-white text-stone-950 p-2">
       <div className="w-1/2 relative rounded-2xl">
-        <img src="/bg.webp" alt="intro-image" className="w-full h-full object-cover rounded-2xl"/>
+        <img src="/bg.webp" alt="intro-image" className="w-full h-full object-cover rounded-xl"/>
       </div>
       <div className="flex flex-col justify-center items-center w-1/2">
         <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 px-6">
@@ -42,7 +42,7 @@ export default function SignupForm({ onSignedUp }: { onSignedUp: (userId: string
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          className="w-full bg-stone-900 border border-stone-700 rounded-2xl px-4 py-2 text-sm outline-none focus:border-stone-500"
+          className="w-full bg-stone-100   rounded-xl px-4 py-2 text-sm outline-none focus:border-stone-500"
         />
         <input
           type="email"
@@ -50,13 +50,13 @@ export default function SignupForm({ onSignedUp }: { onSignedUp: (userId: string
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full bg-stone-900 border border-stone-700 rounded-2xl px-4 py-2 text-sm outline-none focus:border-stone-500"
+          className="w-full bg-stone-100   rounded-xl px-4 py-2 text-sm outline-none focus:border-stone-500"
         />
         {error && <p className="text-sm text-rose-400">{error}</p>}
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-stone-100 text-stone-900 rounded-2xl px-4 py-2 text-sm font-medium hover:bg-white transition-colors disabled:opacity-50"
+          className="w-full bg-stone-200 text-stone-900 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium  transition-colors disabled:opacity-50"
         >
           {loading ? "Joining…" : "Continue"}
         </button>
