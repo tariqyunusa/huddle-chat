@@ -42,8 +42,8 @@ export default function SignupForm({ onSignedUp, onSwitchToLogin }: { onSignedUp
     localStorage.setItem("huddle_display_name", result.display_name);
     onSignedUp(result.user_id);
   } catch (err) {
-    setError("Could not sign up. Try again.");
-  } finally {
+  setError(err instanceof Error ? err.message : "Could not sign up. Try again.");
+} finally {
     setLoading(false);
   }
 }

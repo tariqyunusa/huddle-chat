@@ -31,7 +31,10 @@ export async function signup(email: string, name: string, password: string): Pro
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, display_name: name, password }),
   });
-  if (!res.ok) throw new Error(`Signup failed: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.detail ?? `Signup failed: ${res.status}`);
+  }
   return res.json();
 }
 
