@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import SignupForm from "./SignupForm";
 import ChatView from "./chatView";
 import { fetchSessions, createSession, type SessionSummary } from "./api";
+import Login from "./Login";
 
 function getSessionFromUrl(): string | null {
   const params = new URLSearchParams(window.location.search);
@@ -12,6 +13,8 @@ function App() {
   const [userId, setUserId] = useState<string | null>(
     localStorage.getItem("huddle_user_id")
   );
+
+  const [authMode, setAuthMode] = useState<"signup" | "login">("signup");
   const [displayName] = useState<string>(
     localStorage.getItem("huddle_display_name") ?? "Anonymous"
   );
@@ -50,8 +53,12 @@ function App() {
   }
 
   if (!userId) {
-    return <SignupForm onSignedUp={setUserId} />;
-  }
+  return authMode === "signup" ? (
+    <SignupForm onSignedUp={setUserId} onSwitchToLogin={() => setAuthMode("login")} />
+  ) : (
+    <Login onLoggedIn={setUserId} onSwitchToSignup={() => setAuthMode("signup")} />
+  );
+}
 
   return (
     <div className="flex h-screen bg-white text-stone-800">

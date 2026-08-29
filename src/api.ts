@@ -13,26 +13,41 @@ export type Participant = {
   display_name: string;
 };
 
-export async function signup(email: string, name: string): Promise<{ id: string }> {
+export type LoginResponse = {
+  access_token: string;
+  token_type: string;
+  user_id: string;
+  display_name: string;
+}
+
+function authHeaders(): Record<string, string> {
+  const token = localStorage.getItem("huddle_token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export async function signup(email: string, name: string, password: string): Promise<{ id: string }> {
   const res = await fetch(`${BASE_URL}/users`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, display_name: name }),
+    body: JSON.stringify({ email, display_name: name, password }),
   });
   if (!res.ok) throw new Error(`Signup failed: ${res.status}`);
   return res.json();
 }
 
 export async function fetchSessions(userId: string): Promise<SessionSummary[]> {
-  const res = await fetch(`${BASE_URL}/sessions?created_by=${userId}`);
+  const res = await fetch(`${BASE_URL}/sessions?created_by=${userId}`, {
+    headers: authHeaders(),
+  });
   if (!res.ok) throw new Error(`Failed to fetch sessions: ${res.status}`);
   return res.json();
 }
 
+
 export async function createSession(userId: string, title: string): Promise<SessionSummary> {
   const res = await fetch(`${BASE_URL}/sessions`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ created_by: userId, title }),
   });
   if (!res.ok) throw new Error(`Failed to create session: ${res.status}`);
@@ -40,8 +55,22 @@ export async function createSession(userId: string, title: string): Promise<Sess
 }
 
 export async function fetchParticipants(sessionId: string): Promise<Participant[]> {
-  const res = await fetch(`${BASE_URL}/sessions/${sessionId}/participants`);
+  const res = await fetch(`${BASE_URL}/sessions/${sessionId}/participants`, {
+    headers: authHeaders()
+  });
   if (!res.ok) throw new Error(`Failed to fetch participants: ${res.status}`);
+  return res.json();
+}
+
+
+
+export async function login(email:string, password: string): Promise<LoginResponse> {
+  const res = await fetch(`${BASE_URL}/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json"},
+    body: JSON.stringify({ email, password})
+  })
+  if(!res.ok) throw new Error(`Login failed: ${res.status}`)
   return res.json();
 }
 
