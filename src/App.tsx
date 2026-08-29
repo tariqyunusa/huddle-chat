@@ -11,22 +11,22 @@ function getSessionFromUrl(): string | null {
 
 function App() {
   const [userId, setUserId] = useState<string | null>(
-    localStorage.getItem("huddle_user_id")
+    localStorage.getItem("huddle_user_id"),
   );
 
   const [authMode, setAuthMode] = useState<"signup" | "login">("signup");
-  const [displayName] = useState<string>(
-    localStorage.getItem("huddle_display_name") ?? "Anonymous"
+  const [displayName, setDisplayName] = useState<string>(
+    localStorage.getItem("huddle_display_name") ?? "Anonymous",
   );
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(
-    getSessionFromUrl()
+    getSessionFromUrl(),
   );
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
-    fetchSessions(userId)
+    fetchSessions()
       .then(setSessions)
       .catch((err) => console.error("Failed to load sessions:", err));
   }, [userId]);
@@ -42,7 +42,7 @@ function App() {
     if (!userId) return;
     setCreating(true);
     try {
-      const newSession = await createSession(userId, "New session");
+      const newSession = await createSession("New session");
       setSessions((prev) => [newSession, ...prev]);
       openSession(newSession.id);
     } catch (err) {
@@ -53,12 +53,28 @@ function App() {
   }
 
   if (!userId) {
-  return authMode === "signup" ? (
-    <SignupForm onSignedUp={setUserId} onSwitchToLogin={() => setAuthMode("login")} />
-  ) : (
-    <Login onLoggedIn={setUserId} onSwitchToSignup={() => setAuthMode("signup")} />
-  );
-}
+    return authMode === "signup" ? (
+      <SignupForm
+        onSignedUp={(id) => {
+          setUserId(id);
+          setDisplayName(
+            localStorage.getItem("huddle_display_name") ?? "Anonymous",
+          );
+        }}
+        onSwitchToLogin={() => setAuthMode("login")}
+      />
+    ) : (
+      <Login
+        onLoggedIn={(id) => {
+          setUserId(id);
+          setDisplayName(
+            localStorage.getItem("huddle_display_name") ?? "Anonymous",
+          );
+        }}
+        onSwitchToSignup={() => setAuthMode("signup")}
+      />
+    );
+  }
 
   return (
     <div className="flex h-screen bg-white text-stone-800">
@@ -110,7 +126,8 @@ function App() {
               Start a session with Talon
             </h1>
             <p className="text-stone-500 text-sm max-w-sm text-center">
-              Create a session, invite others, and reason through anything together.
+              Create a session, invite others, and reason through anything
+              together.
             </p>
             <button
               onClick={handleCreateSession}
