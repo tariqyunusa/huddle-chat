@@ -35,8 +35,8 @@ export async function signup(email: string, name: string, password: string): Pro
   return res.json();
 }
 
-export async function fetchSessions(userId: string): Promise<SessionSummary[]> {
-  const res = await fetch(`${BASE_URL}/sessions?created_by=${userId}`, {
+export async function fetchSessions(): Promise<SessionSummary[]> {
+  const res = await fetch(`${BASE_URL}/sessions`, {
     headers: authHeaders(),
   });
   if (!res.ok) throw new Error(`Failed to fetch sessions: ${res.status}`);
@@ -44,11 +44,11 @@ export async function fetchSessions(userId: string): Promise<SessionSummary[]> {
 }
 
 
-export async function createSession(userId: string, title: string): Promise<SessionSummary> {
+export async function createSession( title: string): Promise<SessionSummary> {
   const res = await fetch(`${BASE_URL}/sessions`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify({ created_by: userId, title }),
+    body: JSON.stringify({  title }),
   });
   if (!res.ok) throw new Error(`Failed to create session: ${res.status}`);
   return res.json();
