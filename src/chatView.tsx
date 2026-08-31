@@ -1,11 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { BACKEND_HOST, fetchParticipants, type Participant } from "./api";
-import { Plus,  Link2, Mail, MessageCircle, Check } from "lucide-react";
+import { Plus, Link2, Mail, MessageCircle, Check } from "lucide-react";
 
 type ChatMessage = {
   type: "message" | "thinking" | "error";
   author?: string;
   content?: string;
+};
+
+type ChatViewProps = {
+  sessionId: string;
+  displayName: string;
+  onTitleUpdate?: (sessionId: string, title: string) => void;
 };
 
 const PARTICIPANT_COLORS = [
@@ -37,12 +43,11 @@ function Avatar({ name }: { name: string }) {
   );
 }
 
-type ChatViewProps = {
-  sessionId: string;
-  displayName: string;
-};
-
-export default function ChatView({ sessionId, displayName }: ChatViewProps) {
+export default function ChatView({
+  sessionId,
+  displayName,
+  onTitleUpdate,
+}: ChatViewProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -103,9 +108,13 @@ export default function ChatView({ sessionId, displayName }: ChatViewProps) {
     wsRef.current = ws;
 
     ws.onmessage = (event) => {
-      const data: ChatMessage = JSON.parse(event.data);
+      const data = JSON.parse(event.data);
       if (data.type === "thinking") {
         setThinking(true);
+        return;
+      }
+      if (data.type === "session_title") {
+        onTitleUpdate?.(sessionId, data.title);
         return;
       }
       setThinking(false);

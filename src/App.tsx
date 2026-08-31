@@ -38,6 +38,13 @@ function App() {
     window.history.pushState({}, "", url);
   }
 
+
+  function handleTitleUpdate(sessionId: string, title: string) {
+  setSessions((prev) =>
+    prev.map((s) => (s.id === sessionId ? { ...s, title } : s))
+  );
+}
+
   async function handleCreateSession() {
     if (!userId) return;
     setCreating(true);
@@ -83,7 +90,7 @@ function App() {
           <button
             onClick={handleCreateSession}
             disabled={creating}
-            className="w-full flex items-center gap-2 rounded-lg border border-stone-300 px-3 py-2 text-sm font-medium text-stone-700 hover:bg-white transition-colors disabled:opacity-50"
+            className="w-full flex items-center gap-2 rounded-lg border cursor-pointer border-stone-300 px-3 py-2 text-sm font-medium text-stone-700 hover:bg-white transition-colors disabled:opacity-50"
           >
             <span className="text-lg leading-none">+</span>
             {creating ? "Creating…" : "New session"}
@@ -119,12 +126,17 @@ function App() {
 
       <main className="flex-1 flex flex-col">
         {activeSessionId ? (
-          <ChatView sessionId={activeSessionId} displayName={displayName} />
+          <ChatView sessionId={activeSessionId} displayName={displayName} onTitleUpdate={handleTitleUpdate} />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            <h1 className="text-2xl font-semibold text-stone-800">
+            <div className="flex items-center ">
+              <div className="w-24 h-24 ">
+                <img src="/icon_black.svg" alt="black logo" className="w-full h-full object-cover" />
+              </div>
+              <h1 className="text-2xl font-semibold text-stone-800">
               Start a session with Talon
             </h1>
+            </div>
             <p className="text-stone-500 text-sm max-w-sm text-center">
               Create a session, invite others, and reason through anything
               together.
@@ -132,7 +144,7 @@ function App() {
             <button
               onClick={handleCreateSession}
               disabled={creating}
-              className="bg-stone-800 text-white rounded-lg px-5 py-2.5 text-sm font-medium hover:bg-stone-900 transition-colors disabled:opacity-50"
+              className="bg-stone-800 text-white rounded-lg px-5 py-2.5 text-sm cursor-pointer font-medium hover:bg-stone-900 transition-colors disabled:opacity-50"
             >
               {creating ? "Creating…" : "New session"}
             </button>
