@@ -38,12 +38,11 @@ function App() {
     window.history.pushState({}, "", url);
   }
 
-
   function handleTitleUpdate(sessionId: string, title: string) {
-  setSessions((prev) =>
-    prev.map((s) => (s.id === sessionId ? { ...s, title } : s))
-  );
-}
+    setSessions((prev) =>
+      prev.map((s) => (s.id === sessionId ? { ...s, title } : s)),
+    );
+  }
 
   async function handleCreateSession() {
     if (!userId) return;
@@ -126,16 +125,27 @@ function App() {
 
       <main className="flex-1 flex flex-col">
         {activeSessionId ? (
-          <ChatView sessionId={activeSessionId} displayName={displayName} onTitleUpdate={handleTitleUpdate} />
+          <ChatView
+            sessionId={activeSessionId}
+            displayName={displayName}
+            title={
+              sessions.find((s) => s.id === activeSessionId)?.title ?? null
+            }
+            onTitleUpdate={handleTitleUpdate}
+          />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
             <div className="flex items-center ">
               <div className="w-24 h-24 ">
-                <img src="/icon_black.svg" alt="black logo" className="w-full h-full object-cover" />
+                <img
+                  src="/icon_black.svg"
+                  alt="black logo"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <h1 className="text-2xl font-semibold text-stone-800">
-              Start a session with Talon
-            </h1>
+                Start a session with Talon
+              </h1>
             </div>
             <p className="text-stone-500 text-sm max-w-sm text-center">
               Create a session, invite others, and reason through anything

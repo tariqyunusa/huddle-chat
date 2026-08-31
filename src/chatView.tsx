@@ -11,6 +11,7 @@ type ChatMessage = {
 type ChatViewProps = {
   sessionId: string;
   displayName: string;
+  title: string | null;
   onTitleUpdate?: (sessionId: string, title: string) => void;
 };
 
@@ -46,6 +47,7 @@ function Avatar({ name }: { name: string }) {
 export default function ChatView({
   sessionId,
   displayName,
+  title,
   onTitleUpdate,
 }: ChatViewProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -144,7 +146,7 @@ export default function ChatView({
   return (
     <div className="flex flex-col h-screen bg-white">
       <header className="border-b border-stone-200 px-6 py-3 flex justify-between items-center">
-        <p className="text-sm font-medium text-stone-700">Talon</p>
+        <p className="text-sm font-medium text-stone-700">{title || "Talon"}</p>
         <div className="flex items-center gap-3">
           <div className="flex -space-x-2">
             {participants.map((p) => (
