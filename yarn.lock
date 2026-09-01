@@ -231,6 +231,16 @@
     "@eslint/core" "^1.2.1"
     levn "^0.4.1"
 
+"@hugeicons/core-free-icons@^3.1.1":
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/@hugeicons/core-free-icons/-/core-free-icons-3.3.0.tgz#48be8d9a38a6a4192ef340d7a9ff238597567080"
+  integrity sha512-qYyr4JQ2eQIHTSTbITvnJvs6ERNK64D9gpwZnf2IyuG0exzqfyABLO/oTB71FB3RZPfu1GbwycdiGSo46apjMQ==
+
+"@hugeicons/react@^1.1.4":
+  version "1.1.10"
+  resolved "https://registry.yarnpkg.com/@hugeicons/react/-/react-1.1.10.tgz#63b4164123072f964387d61e181418f846fc2d20"
+  integrity sha512-9tAsd92yMVVGP+E+d8cM+wc0VnXuYZHNbWQi7TOe8k2neawmhiaFmVFbzyruejhOMa197/LbgvSED32ayUo3ZA==
+
 "@humanfs/core@^0.19.2":
   version "0.19.2"
   resolved "https://registry.yarnpkg.com/@humanfs/core/-/core-0.19.2.tgz#a8272ca03b2acf492670222b2320b6c421bfde60"
@@ -946,6 +956,14 @@ hermes-parser@^0.25.1:
   integrity sha512-6pEjquH3rqaI6cYAXYPcz9MS4rY6R4ngRgrgfDshRptUZIc3lw0MCIJIGDj9++mfySOuPTHB4nrSW99BCvOPIA==
   dependencies:
     hermes-estree "0.25.1"
+
+hugeicons-react@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/hugeicons-react/-/hugeicons-react-0.4.0.tgz#269835bdfa42ba2bd65208065722ffdf4d6c3771"
+  integrity sha512-HA2UI3VkDd1dNi9P4JGjaMODdGEs4QVMwQcc34W0aoGHptdsIex/756Jik4GFYN/023jGFKNVvQKhx2IpZtV+g==
+  dependencies:
+    "@hugeicons/core-free-icons" "^3.1.1"
+    "@hugeicons/react" "^1.1.4"
 
 ignore@^5.2.0:
   version "5.3.2"
