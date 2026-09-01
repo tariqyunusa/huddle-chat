@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { BACKEND_HOST, fetchParticipants, type Participant } from "./api";
 import { Plus, Link2, Mail, MessageCircle, Check } from "lucide-react";
+import { useToast } from "./Toast";
 
 type ChatMessage = {
   type: "message" | "thinking" | "error";
@@ -59,6 +60,7 @@ export default function ChatView({
   const shareMenuRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const showToast = useToast();
 
   function getInviteUrl() {
     const url = new URL(window.location.href);
@@ -67,11 +69,10 @@ export default function ChatView({
   }
 
   function copyInviteLink() {
-    navigator.clipboard.writeText(getInviteUrl());
-    setCopied(true);
-    setShareOpen(false);
-    setTimeout(() => setCopied(false), 1500);
-  }
+  navigator.clipboard.writeText(getInviteUrl());
+  showToast("success", "Link copied to clipboard");
+  setShareOpen(false);
+}
 
   function shareViaWhatsApp() {
     const text = encodeURIComponent(
@@ -122,6 +123,15 @@ export default function ChatView({
       setThinking(false);
       setMessages((prev) => [...prev, data]);
     };
+    ws.onerror = () => {
+      showToast("error", "Connection lost. Try refreshing the page.");
+    };
+
+    ws.onclose = (event) => {
+      if (event.code === 4001) {
+        showToast("error", "Your session expired. Please log in again.");
+      }
+    };
 
     return () => ws.close();
   }, [sessionId, displayName]);
@@ -129,7 +139,7 @@ export default function ChatView({
   useEffect(() => {
     fetchParticipants(sessionId)
       .then(setParticipants)
-      .catch((err) => console.error("Failed to load participants:", err));
+      .catch(() => showToast("error", "Couldn't load participants."));
   }, [sessionId]);
 
   useEffect(() => {
@@ -137,11 +147,15 @@ export default function ChatView({
   }, [messages, thinking]);
 
   function sendMessage() {
-    const trimmed = input.trim();
-    if (!trimmed || !wsRef.current) return;
-    wsRef.current.send(JSON.stringify({ content: trimmed }));
-    setInput("");
+  const trimmed = input.trim();
+  if (!trimmed) return;
+  if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+    showToast("error", "Not connected. Try refreshing the page.");
+    return;
   }
+  wsRef.current.send(JSON.stringify({ content: trimmed }));
+  setInput("");
+}
 
   return (
     <div className="flex flex-col h-screen bg-white">
