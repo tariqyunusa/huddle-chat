@@ -5,9 +5,12 @@ import { useToast } from "./Toast";
 export default function LoginForm({
   onLoggedIn,
   onSwitchToSignup,
+  onForgotPassword,
 }: {
   onLoggedIn: (userId: string) => void;
   onSwitchToSignup: () => void;
+  onForgotPassword: () => void;
+
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,10 +38,17 @@ export default function LoginForm({
   return (
     <div className="flex h-screen bg-white text-stone-950 p-2">
       <div className="w-1/2 relative rounded-2xl">
-        <img src="/bg.webp" alt="intro-image" className="w-full h-full object-cover rounded-xl" />
+        <img
+          src="/bg.webp"
+          alt="intro-image"
+          className="w-full h-full object-cover rounded-xl"
+        />
       </div>
       <div className="flex flex-col justify-center items-center w-1/2">
-        <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 px-6">
+        <form
+          onSubmit={handleSubmit}
+          className="w-full max-w-sm space-y-4 px-6"
+        >
           <h1 className="text-xl font-semibold tracking-tight text-center mb-2">
             Welcome back
           </h1>
@@ -63,6 +73,15 @@ export default function LoginForm({
             className="w-full bg-stone-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-stone-500"
           />
           {error && <p className="text-sm text-rose-400">{error}</p>}
+          <p className="text-sm text-center text-stone-500">
+            <button
+              type="button"
+              onClick={onForgotPassword}
+              className="text-stone-800 underline underline-offset-2"
+            >
+              Forgot password?
+            </button>
+          </p>
           <button
             type="submit"
             disabled={loading}

@@ -3,10 +3,18 @@ import SignupForm from "./SignupForm";
 import ChatView from "./chatView";
 import { fetchSessions, createSession, type SessionSummary } from "./api";
 import Login from "./Login";
+import { useToast } from "./Toast";
+import ForgotPasswordForm from "./ForgotPasswordForm";
+import ResetPasswordPage from "./ResetPasswordPage";
 
 function getSessionFromUrl(): string | null {
   const params = new URLSearchParams(window.location.search);
   return params.get("session");
+}
+
+function getResetTokenFromUrl(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("token");
 }
 
 function App() {
@@ -14,7 +22,8 @@ function App() {
     localStorage.getItem("huddle_user_id"),
   );
 
-  const [authMode, setAuthMode] = useState<"signup" | "login">("signup");
+  const [authMode, setAuthMode] = useState<"signup" | "login" | "forgot">("signup");
+  const resetToken = getResetTokenFromUrl();
   const [displayName, setDisplayName] = useState<string>(
     localStorage.getItem("huddle_display_name") ?? "Anonymous",
   );
@@ -22,13 +31,14 @@ function App() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(
     getSessionFromUrl(),
   );
+  const showToast = useToast();
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
     fetchSessions()
       .then(setSessions)
-      .catch((err) => console.error("Failed to load sessions:", err));
+      .catch(() => showToast("error", "Couldn't load your sessions. Try refreshing."));
   }, [userId]);
 
   function openSession(id: string) {
@@ -52,35 +62,39 @@ function App() {
       setSessions((prev) => [newSession, ...prev]);
       openSession(newSession.id);
     } catch (err) {
-      console.error("Failed to create session:", err);
+      showToast("error", "Couldn't create a new session. Try again.");
     } finally {
       setCreating(false);
     }
   }
 
+  if (window.location.pathname === "/reset-password" && resetToken) {
+  return (
+    <ResetPasswordPage
+      token={resetToken}
+      onDone={() => {
+        window.history.pushState({}, "", "/");
+        setAuthMode("login");
+      }}
+    />
+  );
+}
+
   if (!userId) {
-    return authMode === "signup" ? (
-      <SignupForm
-        onSignedUp={(id) => {
-          setUserId(id);
-          setDisplayName(
-            localStorage.getItem("huddle_display_name") ?? "Anonymous",
-          );
-        }}
-        onSwitchToLogin={() => setAuthMode("login")}
-      />
-    ) : (
-      <Login
-        onLoggedIn={(id) => {
-          setUserId(id);
-          setDisplayName(
-            localStorage.getItem("huddle_display_name") ?? "Anonymous",
-          );
-        }}
-        onSwitchToSignup={() => setAuthMode("signup")}
-      />
-    );
+  if (authMode === "signup") {
+    return <SignupForm onSignedUp={setUserId} onSwitchToLogin={() => setAuthMode("login")} />;
   }
+  if (authMode === "forgot") {
+    return <ForgotPasswordForm onBackToLogin={() => setAuthMode("login")} />;
+  }
+  return (
+    <Login
+      onLoggedIn={setUserId}
+      onSwitchToSignup={() => setAuthMode("signup")}
+      onForgotPassword={() => setAuthMode("forgot")}
+    />
+  );
+}
 
   return (
     <div className="flex h-screen bg-white text-stone-800">

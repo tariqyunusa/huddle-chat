@@ -77,4 +77,29 @@ export async function login(email:string, password: string): Promise<LoginRespon
   return res.json();
 }
 
+export async function forgotPassword(email: string): Promise< {message: string}> {
+  const res = await fetch(`${BASE_URL}/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json"},
+    body: JSON.stringify({ email }),
+  });
+  if(!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.detail ?? "Something went wrong. Try again.");
+  }
+  return res.json();
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<{ message: string}> {
+  const res = await fetch(`${BASE_URL}/reset-password`, {
+    method: "POST",
+    headers: { "Content-type": "application/json"},
+    body: JSON.stringify({ token, new_password: newPassword }),
+  });
+  if(!res.ok) {
+    const body = await res.json().catch(() => null)
+    throw new Error(body?.detail ?? "Invalid or expired link.")
+  }
+  return res.json()
+}
 export { BACKEND_HOST };
