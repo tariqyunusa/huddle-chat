@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { login } from "./api";
+import { useToast } from "./Toast";
 
 export default function LoginForm({
   onLoggedIn,
@@ -12,6 +13,7 @@ export default function LoginForm({
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const showToast = useToast();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -24,7 +26,7 @@ export default function LoginForm({
       localStorage.setItem("huddle_display_name", result.display_name);
       onLoggedIn(result.user_id);
     } catch (err) {
-      setError("Invalid email or password.");
+      showToast("error", "Invalid email or password.");
     } finally {
       setLoading(false);
     }

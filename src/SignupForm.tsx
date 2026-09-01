@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { signup, login } from "./api";
+import { useToast } from "./Toast";
 
 type Step = "name" | "email" | "password";
 
@@ -10,6 +11,7 @@ export default function SignupForm({ onSignedUp, onSwitchToLogin }: { onSignedUp
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const showToast = useToast();
 
   function handleNext(e: React.FormEvent) {
     e.preventDefault();
@@ -42,7 +44,7 @@ export default function SignupForm({ onSignedUp, onSwitchToLogin }: { onSignedUp
     localStorage.setItem("huddle_display_name", result.display_name);
     onSignedUp(result.user_id);
   } catch (err) {
-  setError(err instanceof Error ? err.message : "Could not sign up. Try again.");
+  showToast("error", err instanceof Error ? err.message : "Could not sign up. Try again.")
 } finally {
     setLoading(false);
   }
