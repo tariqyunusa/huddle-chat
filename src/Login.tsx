@@ -10,7 +10,6 @@ export default function LoginForm({
   onLoggedIn: (userId: string) => void;
   onSwitchToSignup: () => void;
   onForgotPassword: () => void;
-
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,14 +36,14 @@ export default function LoginForm({
 
   return (
     <div className="flex h-screen bg-white text-stone-950 p-2">
-      <div className="w-1/2 relative rounded-2xl">
+      <div className="hidden md:block md:w-1/2 relative rounded-2xl">
         <img
           src="/bg.webp"
           alt="intro-image"
           className="w-full h-full object-cover rounded-xl"
         />
       </div>
-      <div className="flex flex-col justify-center items-center w-1/2">
+      <div className="flex flex-col justify-center items-center w-full md:w-1/2">
         <form
           onSubmit={handleSubmit}
           className="w-full max-w-sm space-y-4 px-6"

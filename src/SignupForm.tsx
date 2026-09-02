@@ -4,7 +4,13 @@ import { useToast } from "./Toast";
 
 type Step = "name" | "email" | "password";
 
-export default function SignupForm({ onSignedUp, onSwitchToLogin }: { onSignedUp: (userId: string) => void; onSwitchToLogin: () => void }) {
+export default function SignupForm({
+  onSignedUp,
+  onSwitchToLogin,
+}: {
+  onSignedUp: (userId: string) => void;
+  onSwitchToLogin: () => void;
+}) {
   const [step, setStep] = useState<Step>("name");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -32,30 +38,37 @@ export default function SignupForm({ onSignedUp, onSwitchToLogin }: { onSignedUp
   }
 
   async function handleSubmit(e: React.FormEvent) {
-  e.preventDefault();
-  if (!password.trim()) return;
-  setError(null);
-  setLoading(true);
-  try {
-    await signup(email, name, password);
-    const result = await login(email, password);
-    localStorage.setItem("huddle_token", result.access_token);
-    localStorage.setItem("huddle_user_id", result.user_id);
-    localStorage.setItem("huddle_display_name", result.display_name);
-    onSignedUp(result.user_id);
-  } catch (err) {
-  showToast("error", err instanceof Error ? err.message : "Could not sign up. Try again.")
-} finally {
-    setLoading(false);
+    e.preventDefault();
+    if (!password.trim()) return;
+    setError(null);
+    setLoading(true);
+    try {
+      await signup(email, name, password);
+      const result = await login(email, password);
+      localStorage.setItem("huddle_token", result.access_token);
+      localStorage.setItem("huddle_user_id", result.user_id);
+      localStorage.setItem("huddle_display_name", result.display_name);
+      onSignedUp(result.user_id);
+    } catch (err) {
+      showToast(
+        "error",
+        err instanceof Error ? err.message : "Could not sign up. Try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
   }
-}
 
   return (
     <div className="flex h-screen bg-white text-stone-950 p-2">
-      <div className="w-1/2 relative rounded-2xl">
-        <img src="/bg.webp" alt="intro-image" className="w-full h-full object-cover rounded-xl" />
+      <div className="hidden md:block md:w-1/2 relative rounded-2xl">
+        <img
+          src="/bg.webp"
+          alt="intro-image"
+          className="w-full h-full object-cover rounded-xl"
+        />
       </div>
-      <div className="flex flex-col justify-center items-center w-1/2">
+      <div className="flex flex-col justify-center items-center w-full md:w-1/2">
         <form
           onSubmit={step === "password" ? handleSubmit : handleNext}
           className="w-full max-w-sm space-y-4 px-6"
@@ -123,7 +136,11 @@ export default function SignupForm({ onSignedUp, onSwitchToLogin }: { onSignedUp
               disabled={loading}
               className="flex-1 bg-stone-200 text-stone-900 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
             >
-              {step === "password" ? (loading ? "Joining…" : "Continue") : "Next"}
+              {step === "password"
+                ? loading
+                  ? "Joining…"
+                  : "Continue"
+                : "Next"}
             </button>
           </div>
 
@@ -137,7 +154,7 @@ export default function SignupForm({ onSignedUp, onSwitchToLogin }: { onSignedUp
               />
             ))}
           </div>
-            
+
           <p className="text-sm text-center text-stone-500">
             Already have an account?{" "}
             <button
@@ -156,8 +173,8 @@ export default function SignupForm({ onSignedUp, onSwitchToLogin }: { onSignedUp
               href="https://tariqyunusa.xyz"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-400 hover:underline">
-            
+              className="text-gray-400 hover:underline"
+            >
               Tariq Yunusa
             </a>
           </p>
