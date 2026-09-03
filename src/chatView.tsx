@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { BACKEND_HOST, fetchParticipants, type Participant } from "./api";
 import { Plus, Link2, Mail, MessageCircle, Check } from "lucide-react";
 import { useToast } from "./Toast";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import MermaidDiagram from "./MermaidDiagram";
 
 type ChatMessage = {
   type: "message" | "thinking" | "error";
@@ -55,7 +58,7 @@ export default function ChatView({
   const [input, setInput] = useState("");
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [thinking, setThinking] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copied,] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const shareMenuRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -69,10 +72,10 @@ export default function ChatView({
   }
 
   function copyInviteLink() {
-  navigator.clipboard.writeText(getInviteUrl());
-  showToast("success", "Link copied to clipboard");
-  setShareOpen(false);
-}
+    navigator.clipboard.writeText(getInviteUrl());
+    showToast("success", "Link copied to clipboard");
+    setShareOpen(false);
+  }
 
   function shareViaWhatsApp() {
     const text = encodeURIComponent(
@@ -147,15 +150,15 @@ export default function ChatView({
   }, [messages, thinking]);
 
   function sendMessage() {
-  const trimmed = input.trim();
-  if (!trimmed) return;
-  if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-    showToast("error", "Not connected. Try refreshing the page.");
-    return;
+    const trimmed = input.trim();
+    if (!trimmed) return;
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      showToast("error", "Not connected. Try refreshing the page.");
+      return;
+    }
+    wsRef.current.send(JSON.stringify({ content: trimmed }));
+    setInput("");
   }
-  wsRef.current.send(JSON.stringify({ content: trimmed }));
-  setInput("");
-}
 
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -266,7 +269,53 @@ function MessageRow({ msg, isSelf }: { msg: ChatMessage; isSelf: boolean }) {
       >
         {msg.author}
       </span>
-      <p className="text-sm text-stone-700 leading-relaxed">{msg.content}</p>
+      <div className="text-sm text-stone-700 leading-relaxed prose prose-sm prose-stone max-w-none">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            code({ className, children, ...props }) {
+              const match = /language-(\w+)/.exec(className || "");
+              const lang = match?.[1];
+              if (lang === "mermaid") {
+                return <MermaidDiagram code={String(children).trim()} />;
+              }
+              return (
+                <code
+                  className="bg-stone-100 rounded px-1 py-0.5 text-xs"
+                  {...props}
+                >
+                  {children}
+                </code>
+              );
+            },
+            table({ children }) {
+              return (
+                <div className="overflow-x-auto my-2">
+                  <table className="border-collapse border border-stone-200 text-sm">
+                    {children}
+                  </table>
+                </div>
+              );
+            },
+            th({ children }) {
+              return (
+                <th className="border border-stone-200 bg-stone-50 px-3 py-1.5 text-left font-medium">
+                  {children}
+                </th>
+              );
+            },
+            td({ children }) {
+              return (
+                <td className="border border-stone-200 px-3 py-1.5">
+                  {children}
+                </td>
+              );
+            },
+          }}
+        >
+          {msg.content}
+        </ReactMarkdown>
+      </div>
     </div>
   );
 }
