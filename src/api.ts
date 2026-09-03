@@ -20,6 +20,8 @@ export type LoginResponse = {
   display_name: string;
 }
 
+export type UserSearchResult = { id: string; display_name: string };
+
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem("huddle_token");
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -101,5 +103,27 @@ export async function resetPassword(token: string, newPassword: string): Promise
     throw new Error(body?.detail ?? "Invalid or expired link.")
   }
   return res.json()
+}
+
+
+
+export async function searchUsers(query: string): Promise<UserSearchResult[]> {
+  const res = await fetch(`${BASE_URL}/users/search?q=${encodeURIComponent(query)}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Search failed");
+  return res.json();
+}
+
+export async function inviteToSession(sessionId: string, payload: { email?: string; user_id?: string }): Promise<void> {
+  const res = await fetch(`${BASE_URL}/sessions/${sessionId}/invite`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.detail ?? "Failed to send invite");
+  }
 }
 export { BACKEND_HOST };

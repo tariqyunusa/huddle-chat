@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, memo } from "react";
 import mermaid from "mermaid";
 
 mermaid.initialize({ startOnLoad: false, theme: "neutral" });
 
-export default function MermaidDiagram({ code }: { code: string }) {
+ function MermaidDiagram({ code }: { code: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
   const idRef = useRef(`mermaid-${Math.random().toString(36).slice(2)}`);
@@ -35,3 +35,5 @@ export default function MermaidDiagram({ code }: { code: string }) {
 
   return <div ref={ref} className="my-2 flex justify-center" />;
 }
+
+export default memo(MermaidDiagram);
