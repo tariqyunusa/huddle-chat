@@ -2,7 +2,13 @@ import { useState } from "react";
 import { resetPassword } from "./api";
 import { useToast } from "./Toast";
 
-export default function ResetPasswordPage({ token, onDone }: { token: string; onDone: () => void }) {
+export default function ResetPasswordPage({
+  token,
+  onDone,
+}: {
+  token: string;
+  onDone: () => void;
+}) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,7 +26,10 @@ export default function ResetPasswordPage({ token, onDone }: { token: string; on
       showToast("success", "Password updated. You can now log in.");
       onDone();
     } catch (err) {
-      showToast("error", err instanceof Error ? err.message : "Invalid or expired link.");
+      showToast(
+        "error",
+        err instanceof Error ? err.message : "Invalid or expired link.",
+      );
     } finally {
       setLoading(false);
     }
@@ -28,11 +37,18 @@ export default function ResetPasswordPage({ token, onDone }: { token: string; on
 
   return (
     <div className="flex h-screen bg-white text-stone-950 p-2">
-      <div className="w-1/2 relative rounded-2xl">
-        <img src="/bg.webp" alt="intro-image" className="w-full h-full object-cover rounded-xl" />
+      <div className="hidden md:block md:w-1/2 relative rounded-2xl">
+        <img
+          src="/bg.webp"
+          alt="intro-image"
+          className="w-full h-full object-cover rounded-xl"
+        />
       </div>
-      <div className="flex flex-col justify-center items-center w-1/2">
-        <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 px-6">
+      <div className="flex flex-col justify-center items-center w-full md:w-1/2">
+        <form
+          onSubmit={handleSubmit}
+          className="w-full max-w-sm space-y-4 px-6"
+        >
           <h1 className="text-xl font-semibold tracking-tight text-center mb-2">
             Set a new password
           </h1>

@@ -1,10 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { BACKEND_HOST, fetchParticipants, type Participant } from "./api";
+import {
+  BACKEND_HOST,
+  fetchParticipants,
+  inviteToSession,
+  searchUsers,
+  type Participant,
+} from "./api";
 import { Plus, Link2, Mail, MessageCircle, Check } from "lucide-react";
 import { useToast } from "./Toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import MermaidDiagram from "./MermaidDiagram";
+import type {UserSearchResult} from "./api";
+
 
 type ChatMessage = {
   type: "message" | "thinking" | "error";
@@ -58,12 +66,48 @@ export default function ChatView({
   const [input, setInput] = useState("");
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [thinking, setThinking] = useState(false);
-  const [copied,] = useState(false);
+  const [copied] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const shareMenuRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const showToast = useToast();
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteQuery, setInviteQuery] = useState("");
+  const [inviteResults, setInviteResults] = useState<UserSearchResult[]>([]);
+  const [inviting, setInviting] = useState(false);
+  const inviteMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (inviteQuery.includes("@") || inviteQuery.trim().length < 2) {
+      setInviteResults([]);
+      return;
+    }
+    const timeout = setTimeout(() => {
+      searchUsers(inviteQuery)
+        .then(setInviteResults)
+        .catch(() => setInviteResults([]));
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [inviteQuery]);
+
+  async function sendInvite(target: { email?: string; user_id?: string }) {
+    setInviting(true);
+    try {
+      await inviteToSession(sessionId, target);
+      showToast("success", "Invite sent");
+      setInviteOpen(false);
+      setInviteQuery("");
+      setInviteResults([]);
+    } catch (err) {
+      showToast(
+        "error",
+        err instanceof Error ? err.message : "Couldn't send invite",
+      );
+    } finally {
+      setInviting(false);
+    }
+  }
 
   function getInviteUrl() {
     const url = new URL(window.location.href);
@@ -205,9 +249,50 @@ export default function ChatView({
               </div>
             )}
           </div>
-          <button className="outline-none border-none cursor-pointer">
-            <Plus size={16} />
-          </button>
+          <div className="relative" ref={inviteMenuRef}>
+            <button
+              onClick={() => setInviteOpen((prev) => !prev)}
+              className="outline-none border-none cursor-pointer"
+            >
+              <Plus size={16} />
+            </button>
+
+            {inviteOpen && (
+              <div className="absolute right-0 mt-2 w-64 bg-white border border-stone-200 rounded-xl shadow-lg p-3 z-10">
+                <input
+                  type="text"
+                  value={inviteQuery}
+                  onChange={(e) => setInviteQuery(e.target.value)}
+                  placeholder="Email or name…"
+                  autoFocus
+                  className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-stone-400"
+                />
+                {inviteQuery.includes("@") && (
+                  <button
+                    onClick={() => sendInvite({ email: inviteQuery })}
+                    disabled={inviting}
+                    className="w-full mt-2 bg-stone-800 text-white rounded-lg px-3 py-1.5 text-sm disabled:opacity-50"
+                  >
+                    {inviting ? "Sending…" : `Invite ${inviteQuery}`}
+                  </button>
+                )}
+                {inviteResults.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {inviteResults.map((u) => (
+                      <button
+                        key={u.id}
+                        onClick={() => sendInvite({ user_id: u.id })}
+                        disabled={inviting}
+                        className="w-full text-left px-2 py-1.5 rounded-lg text-sm hover:bg-stone-50 disabled:opacity-50"
+                      >
+                        {u.display_name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -247,6 +332,40 @@ export default function ChatView({
   );
 }
 
+const markdownComponents = {
+  code({ className, children, ...props }: any) {
+    const match = /language-(\w+)/.exec(className || "");
+    const lang = match?.[1];
+    if (lang === "mermaid") {
+      return <MermaidDiagram code={String(children).trim()} />;
+    }
+    return (
+      <code className="bg-stone-100 rounded px-1 py-0.5 text-xs" {...props}>
+        {children}
+      </code>
+    );
+  },
+  table({ children }: any) {
+    return (
+      <div className="overflow-x-auto my-2">
+        <table className="border-collapse border border-stone-200 text-sm">
+          {children}
+        </table>
+      </div>
+    );
+  },
+  th({ children }: any) {
+    return (
+      <th className="border border-stone-200 bg-stone-50 px-3 py-1.5 text-left font-medium">
+        {children}
+      </th>
+    );
+  },
+  td({ children }: any) {
+    return <td className="border border-stone-200 px-3 py-1.5">{children}</td>;
+  },
+};
+
 function MessageRow({ msg, isSelf }: { msg: ChatMessage; isSelf: boolean }) {
   const isTalon = msg.author === "Talon";
 
@@ -270,52 +389,12 @@ function MessageRow({ msg, isSelf }: { msg: ChatMessage; isSelf: boolean }) {
         {msg.author}
       </span>
       <div className="text-sm text-stone-700 leading-relaxed prose prose-sm prose-stone max-w-none">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          components={{
-            code({ className, children, ...props }) {
-              const match = /language-(\w+)/.exec(className || "");
-              const lang = match?.[1];
-              if (lang === "mermaid") {
-                return <MermaidDiagram code={String(children).trim()} />;
-              }
-              return (
-                <code
-                  className="bg-stone-100 rounded px-1 py-0.5 text-xs"
-                  {...props}
-                >
-                  {children}
-                </code>
-              );
-            },
-            table({ children }) {
-              return (
-                <div className="overflow-x-auto my-2">
-                  <table className="border-collapse border border-stone-200 text-sm">
-                    {children}
-                  </table>
-                </div>
-              );
-            },
-            th({ children }) {
-              return (
-                <th className="border border-stone-200 bg-stone-50 px-3 py-1.5 text-left font-medium">
-                  {children}
-                </th>
-              );
-            },
-            td({ children }) {
-              return (
-                <td className="border border-stone-200 px-3 py-1.5">
-                  {children}
-                </td>
-              );
-            },
-          }}
-        >
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
           {msg.content}
         </ReactMarkdown>
       </div>
     </div>
   );
 }
+
+

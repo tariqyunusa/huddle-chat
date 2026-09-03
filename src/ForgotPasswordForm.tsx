@@ -2,7 +2,11 @@ import { useState } from "react";
 import { forgotPassword } from "./api";
 import { useToast } from "./Toast";
 
-export default function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
+export default function ForgotPasswordForm({
+  onBackToLogin,
+}: {
+  onBackToLogin: () => void;
+}) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -15,7 +19,10 @@ export default function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: (
       await forgotPassword(email);
       setSent(true);
     } catch (err) {
-      showToast("error", err instanceof Error ? err.message : "Something went wrong.");
+      showToast(
+        "error",
+        err instanceof Error ? err.message : "Something went wrong.",
+      );
     } finally {
       setLoading(false);
     }
@@ -23,10 +30,14 @@ export default function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: (
 
   return (
     <div className="flex h-screen bg-white text-stone-950 p-2">
-      <div className="w-1/2 relative rounded-2xl">
-        <img src="/bg.webp" alt="intro-image" className="w-full h-full object-cover rounded-xl" />
+      <div className="hidden md:block md:w-1/2 relative rounded-2xl">
+        <img
+          src="/bg.webp"
+          alt="intro-image"
+          className="w-full h-full object-cover rounded-xl"
+        />
       </div>
-      <div className="flex flex-col justify-center items-center w-1/2">
+      <div className="flex flex-col justify-center items-center w-full md:w-1/2">
         <div className="w-full max-w-sm space-y-4 px-6">
           <h1 className="text-xl font-semibold tracking-tight text-center mb-2">
             Reset your password
@@ -35,7 +46,8 @@ export default function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: (
           {sent ? (
             <>
               <p className="text-base text-gray-500 text-center">
-                If an account exists for <strong>{email}</strong>, a reset link has been sent.
+                If an account exists for <strong>{email}</strong>, a reset link
+                has been sent.
               </p>
               <button
                 onClick={onBackToLogin}
