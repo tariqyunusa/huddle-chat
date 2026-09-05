@@ -11,8 +11,7 @@ import { useToast } from "./Toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import MermaidDiagram from "./MermaidDiagram";
-import type {UserSearchResult} from "./api";
-
+import type { UserSearchResult } from "./api";
 
 type ChatMessage = {
   type: "message" | "thinking" | "error";
@@ -152,8 +151,11 @@ export default function ChatView({
   useEffect(() => {
     setMessages([]);
     const token = localStorage.getItem("huddle_token");
+    const isLocal =
+      BACKEND_HOST.includes("localhost") || BACKEND_HOST.includes("127.0.0.1");
+    const wsScheme = isLocal ? "ws" : "wss";
     const ws = new WebSocket(
-      `wss://${BACKEND_HOST}/ws/session/${sessionId}?token=${token}`,
+      `${wsScheme}://${BACKEND_HOST}/ws/session/${sessionId}?token=${token}`,
     );
     wsRef.current = ws;
 
@@ -165,6 +167,11 @@ export default function ChatView({
       }
       if (data.type === "session_title") {
         onTitleUpdate?.(sessionId, data.title);
+        return;
+      }
+      if (data.type === "error") {
+        setThinking(false);
+        showToast("error", data.content);
         return;
       }
       setThinking(false);
@@ -389,12 +396,13 @@ function MessageRow({ msg, isSelf }: { msg: ChatMessage; isSelf: boolean }) {
         {msg.author}
       </span>
       <div className="text-sm text-stone-700 leading-relaxed prose prose-sm prose-stone max-w-none">
-        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={markdownComponents}
+        >
           {msg.content}
         </ReactMarkdown>
       </div>
     </div>
   );
 }
-
-
