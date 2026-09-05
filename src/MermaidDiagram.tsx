@@ -1,15 +1,20 @@
 import { useEffect, useRef, useState, memo } from "react";
 import mermaid from "mermaid";
 
-mermaid.initialize({ startOnLoad: false, theme: "neutral" });
+mermaid.initialize({
+  startOnLoad: false,
+  theme: "neutral",
+  suppressErrorRendering: true,
+});
 
- function MermaidDiagram({ code }: { code: string }) {
+function MermaidDiagram({ code }: { code: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
   const idRef = useRef(`mermaid-${Math.random().toString(36).slice(2)}`);
 
   useEffect(() => {
     let cancelled = false;
+    if (ref.current) ref.current.innerHTML = ""; // clear before attempting
     mermaid
       .render(idRef.current, code)
       .then(({ svg }) => {
@@ -27,8 +32,10 @@ mermaid.initialize({ startOnLoad: false, theme: "neutral" });
 
   if (error) {
     return (
-      <pre className="bg-stone-50 border border-stone-200 rounded-lg p-3 text-xs text-rose-500 overflow-x-auto">
-        Failed to render diagram: {error}
+      <pre className="bg-stone-50 border border-stone-200 rounded-lg p-3 text-xs text-stone-500 overflow-x-auto whitespace-pre-wrap">
+        Diagram couldn't be rendered. Here's the raw content:
+        {"\n\n"}
+        {code}
       </pre>
     );
   }

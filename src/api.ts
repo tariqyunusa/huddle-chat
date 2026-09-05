@@ -1,5 +1,6 @@
-const BACKEND_HOST = "huddle-6j42.onrender.com";
-const BASE_URL = `https://${BACKEND_HOST}`;
+const BACKEND_HOST = import.meta.env.VITE_BACKEND_HOST || "huddle-6j42.onrender.com";
+const isLocal = BACKEND_HOST.includes("localhost") || BACKEND_HOST.includes("127.0.0.1");
+const BASE_URL = `${isLocal ? "http" : "https"}://${BACKEND_HOST}`;
 
 export type SessionSummary = {
   id: string;
