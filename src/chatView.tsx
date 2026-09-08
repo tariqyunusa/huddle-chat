@@ -1,17 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  BACKEND_HOST,
-  fetchParticipants,
-  inviteToSession,
-  searchUsers,
-  type Participant,
-} from "./api";
-import { Plus, Link2, Mail, MessageCircle, Check } from "lucide-react";
+import { BACKEND_HOST, fetchParticipants, type Participant } from "./api";
+import { Plus } from "lucide-react";
 import { useToast } from "./Toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import MermaidDiagram from "./MermaidDiagram";
-import type { UserSearchResult } from "./api";
+import InviteModal from "./InviteModal";
 
 type ChatMessage = {
   type: "message" | "thinking" | "error";
@@ -65,88 +59,10 @@ export default function ChatView({
   const [input, setInput] = useState("");
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [thinking, setThinking] = useState(false);
-  const [copied] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
-  const shareMenuRef = useRef<HTMLDivElement>(null);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const showToast = useToast();
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteQuery, setInviteQuery] = useState("");
-  const [inviteResults, setInviteResults] = useState<UserSearchResult[]>([]);
-  const [inviting, setInviting] = useState(false);
-  const inviteMenuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (inviteQuery.includes("@") || inviteQuery.trim().length < 2) {
-      setInviteResults([]);
-      return;
-    }
-    const timeout = setTimeout(() => {
-      searchUsers(inviteQuery)
-        .then(setInviteResults)
-        .catch(() => setInviteResults([]));
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [inviteQuery]);
-
-  async function sendInvite(target: { email?: string; user_id?: string }) {
-    setInviting(true);
-    try {
-      await inviteToSession(sessionId, target);
-      showToast("success", "Invite sent");
-      setInviteOpen(false);
-      setInviteQuery("");
-      setInviteResults([]);
-    } catch (err) {
-      showToast(
-        "error",
-        err instanceof Error ? err.message : "Couldn't send invite",
-      );
-    } finally {
-      setInviting(false);
-    }
-  }
-
-  function getInviteUrl() {
-    const url = new URL(window.location.href);
-    url.searchParams.set("session", sessionId);
-    return url.toString();
-  }
-
-  function copyInviteLink() {
-    navigator.clipboard.writeText(getInviteUrl());
-    showToast("success", "Link copied to clipboard");
-    setShareOpen(false);
-  }
-
-  function shareViaWhatsApp() {
-    const text = encodeURIComponent(
-      `Join my Huddle session: ${getInviteUrl()}`,
-    );
-    window.open(`https://wa.me/?text=${text}`, "_blank");
-    setShareOpen(false);
-  }
-
-  function shareViaEmail() {
-    const subject = encodeURIComponent("Join my Huddle session");
-    const body = encodeURIComponent(`Join here: ${getInviteUrl()}`);
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
-    setShareOpen(false);
-  }
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        shareMenuRef.current &&
-        !shareMenuRef.current.contains(e.target as Node)
-      ) {
-        setShareOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   useEffect(() => {
     setMessages([]);
@@ -221,85 +137,12 @@ export default function ChatView({
               <Avatar key={p.user_id} name={p.display_name} />
             ))}
           </div>
-          <div className="relative" ref={shareMenuRef}>
-            <button
-              onClick={() => setShareOpen((prev) => !prev)}
-              className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-stone-600 border border-stone-300 rounded-lg px-3 py-1.5 hover:bg-stone-50 transition-colors"
-            >
-              <Link2 size={14} />
-              Share
-            </button>
-
-            {shareOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-stone-200 rounded-xl shadow-lg py-1 z-10">
-                <button
-                  onClick={copyInviteLink}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 transition-colors"
-                >
-                  {copied ? <Check size={14} /> : <Link2 size={14} />}
-                  {copied ? "Copied!" : "Copy link"}
-                </button>
-                <button
-                  onClick={shareViaWhatsApp}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 transition-colors"
-                >
-                  <MessageCircle size={14} />
-                  WhatsApp
-                </button>
-                <button
-                  onClick={shareViaEmail}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 transition-colors"
-                >
-                  <Mail size={14} />
-                  Email
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="relative" ref={inviteMenuRef}>
-            <button
-              onClick={() => setInviteOpen((prev) => !prev)}
-              className="outline-none border-none cursor-pointer"
-            >
-              <Plus size={16} />
-            </button>
-
-            {inviteOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white border border-stone-200 rounded-xl shadow-lg p-3 z-10">
-                <input
-                  type="text"
-                  value={inviteQuery}
-                  onChange={(e) => setInviteQuery(e.target.value)}
-                  placeholder="Email or name…"
-                  autoFocus
-                  className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-stone-400"
-                />
-                {inviteQuery.includes("@") && (
-                  <button
-                    onClick={() => sendInvite({ email: inviteQuery })}
-                    disabled={inviting}
-                    className="w-full mt-2 bg-stone-800 text-white rounded-lg px-3 py-1.5 text-sm disabled:opacity-50"
-                  >
-                    {inviting ? "Sending…" : `Invite ${inviteQuery}`}
-                  </button>
-                )}
-                {inviteResults.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    {inviteResults.map((u) => (
-                      <button
-                        key={u.id}
-                        onClick={() => sendInvite({ user_id: u.id })}
-                        disabled={inviting}
-                        className="w-full text-left px-2 py-1.5 rounded-lg text-sm hover:bg-stone-50 disabled:opacity-50"
-                      >
-                        {u.display_name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <button
+            onClick={() => setInviteModalOpen(true)}
+            className="outline-none border-none cursor-pointer"
+          >
+            <Plus size={16} />
+          </button>
         </div>
       </header>
 
@@ -335,6 +178,10 @@ export default function ChatView({
           </button>
         </div>
       </div>
+
+      {inviteModalOpen && (
+        <InviteModal sessionId={sessionId} onClose={() => setInviteModalOpen(false)} />
+      )}
     </div>
   );
 }
@@ -396,10 +243,7 @@ function MessageRow({ msg, isSelf }: { msg: ChatMessage; isSelf: boolean }) {
         {msg.author}
       </span>
       <div className="text-sm text-stone-700 leading-relaxed prose prose-sm prose-stone max-w-none">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          components={markdownComponents}
-        >
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
           {msg.content}
         </ReactMarkdown>
       </div>
