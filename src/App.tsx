@@ -6,7 +6,8 @@ import Login from "./Login";
 import { useToast } from "./Toast";
 import ForgotPasswordForm from "./ForgotPasswordForm";
 import ResetPasswordPage from "./ResetPasswordPage";
-import { Menu,  } from "lucide-react";
+import { Menu } from "lucide-react";
+import SessionMenu from "./SessionMenu";
 
 function getSessionFromUrl(): string | null {
   const params = new URLSearchParams(window.location.search);
@@ -58,6 +59,16 @@ function App() {
     setSessions((prev) =>
       prev.map((s) => (s.id === sessionId ? { ...s, title } : s)),
     );
+  }
+
+  function handleSessionDeleted(sessionId: string) {
+    setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+    if (activeSessionId === sessionId) {
+      setActiveSessionId(null);
+      const url = new URL(window.location.href);
+      url.searchParams.delete("session");
+      window.history.pushState({}, "", url);
+    }
   }
 
   async function handleCreateSession() {
@@ -147,17 +158,25 @@ function App() {
             <p className="px-2 py-2 text-sm text-stone-400">No sessions yet</p>
           )}
           {sessions.map((s) => (
-            <button
+            <div
               key={s.id}
               onClick={() => openSession(s.id)}
-              className={`w-full text-left px-3 py-2 rounded-lg text-sm truncate transition-colors ${
+              className={`group flex items-center justify-between px-3 py-2 rounded-lg text-sm truncate transition-colors cursor-pointer ${
                 activeSessionId === s.id
                   ? "bg-stone-200 text-stone-900"
                   : "text-stone-600 hover:bg-stone-100"
               }`}
             >
-              {s.title || "Untitled session"}
-            </button>
+              <span className="truncate flex-1">
+                {s.title || "Untitled session"}
+              </span>
+              <SessionMenu
+                sessionId={s.id}
+                currentTitle={s.title || ""}
+                onRenamed={handleTitleUpdate}
+                onDeleted={handleSessionDeleted}
+              />
+            </div>
           ))}
         </div>
 
