@@ -127,4 +127,25 @@ export async function inviteToSession(sessionId: string, payload: { email?: stri
     throw new Error(body?.detail ?? "Failed to send invite");
   }
 }
+
+export async function renameSession(sessionId: string, title: string): Promise<SessionSummary> {
+  const res = await fetch(`${BASE_URL}/sessions/${sessionId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ title }),
+  });
+  if (!res.ok) throw new Error("Failed to rename session");
+  return res.json();
+}
+
+export async function deleteSession(sessionId: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/sessions/${sessionId}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.detail ?? "Failed to delete session");
+  }
+}
 export { BACKEND_HOST };

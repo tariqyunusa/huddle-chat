@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X as CloseIcon, Mail, Link2, MessageCircle, Check } from "lucide-react";
+import { X as CloseIcon, Mail, Link2, Check } from "lucide-react";
 import { inviteToSession, searchUsers, type UserSearchResult } from "./api";
 import { useToast } from "./Toast";
 import {NewTwitterIcon, SnapchatIcon, WhatsappIcon} from 'hugeicons-react'
