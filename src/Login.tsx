@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { login } from "./api";
 import { useToast } from "./Toast";
-import { motion } from "motion/react";
+
 import AuthTransition from "./AuthTransition";
 
 export default function LoginForm({
@@ -28,6 +28,7 @@ export default function LoginForm({
       localStorage.setItem("huddle_token", result.access_token);
       localStorage.setItem("huddle_user_id", result.user_id);
       localStorage.setItem("huddle_display_name", result.display_name);
+      window.history.pushState({}, "", "/");
       onLoggedIn(result.user_id);
     } catch (err) {
       showToast("error", "Invalid email or password.");

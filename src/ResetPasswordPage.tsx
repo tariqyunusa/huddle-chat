@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { resetPassword } from "./api";
 import { useToast } from "./Toast";
-import { motion } from "motion/react";
 import AuthTransition from "./AuthTransition";
 
 export default function ResetPasswordPage({

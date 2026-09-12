@@ -148,4 +148,24 @@ export async function deleteSession(sessionId: string): Promise<void> {
     throw new Error(body?.detail ?? "Failed to delete session");
   }
 }
+
+export async function verifyEmail(token: string): Promise<{ message: string }> {
+  const res = await fetch(`${BASE_URL}/verify-email?token=${encodeURIComponent(token)}`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.detail ?? "Invalid or expired link.");
+  }
+  return res.json();
+}
+
+export async function resendVerification(): Promise<{ message: string }> {
+  const res = await fetch(`${BASE_URL}/resend-verification`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Couldn't resend verification email");
+  return res.json();
+}
 export { BACKEND_HOST };
