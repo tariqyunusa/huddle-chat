@@ -50,6 +50,7 @@ export default function SignupForm({
       localStorage.setItem("huddle_token", result.access_token);
       localStorage.setItem("huddle_user_id", result.user_id);
       localStorage.setItem("huddle_display_name", result.display_name);
+      window.history.pushState({}, "", "/");
       onSignedUp(result.user_id);
     } catch (err) {
       showToast(

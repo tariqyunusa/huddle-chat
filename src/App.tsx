@@ -8,7 +8,8 @@ import ForgotPasswordForm from "./ForgotPasswordForm";
 import ResetPasswordPage from "./ResetPasswordPage";
 import { Menu } from "lucide-react";
 import SessionMenu from "./SessionMenu";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence} from "motion/react";
+import VerifyEmailPage from "./VerifyEmailPage";
 
 function getSessionFromUrl(): string | null {
   const params = new URLSearchParams(window.location.search);
@@ -97,6 +98,15 @@ function App() {
       />
     );
   }
+
+  if (window.location.pathname === "/verify-email" && resetToken) {
+  return (
+    <VerifyEmailPage
+      token={resetToken}
+      onDone={() => window.history.pushState({}, "", "/")}
+    />
+  );
+}
 
   if (!userId) {
     return (
