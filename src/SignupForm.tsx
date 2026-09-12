@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { signup, login } from "./api";
 import { useToast } from "./Toast";
+import { AnimatePresence, motion } from "motion/react";
+import AuthTransition from "./AuthTransition";
 
 type Step = "name" | "email" | "password";
 
@@ -69,103 +71,113 @@ export default function SignupForm({
         />
       </div>
       <div className="flex flex-col justify-center items-center w-full md:w-1/2">
-        <form
-          onSubmit={step === "password" ? handleSubmit : handleNext}
-          className="w-full max-w-sm space-y-4 px-6"
-        >
-          <h1 className="text-xl font-semibold tracking-tight text-center mb-2">
-            Welcome to Huddle
-          </h1>
-          <p className="text-base text-gray-500 text-center mb-4">
-            {step === "name" && "What should we call you?"}
-            {step === "email" && "What's your email?"}
-            {step === "password" && "Create a password"}
-          </p>
+        <AuthTransition>
+          <form
+            onSubmit={step === "password" ? handleSubmit : handleNext}
+            className="w-full max-w-sm space-y-4 px-6"
+          >
+            <h1 className="text-xl font-semibold tracking-tight text-center mb-2">
+              Welcome to Huddle
+            </h1>
+            <p className="text-base text-gray-500 text-center mb-4">
+              {step === "name" && "What should we call you?"}
+              {step === "email" && "What's your email?"}
+              {step === "password" && "Create a password"}
+            </p>
 
-          {step === "name" && (
-            <input
-              type="text"
-              placeholder="Your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoFocus
-              required
-              className="w-full bg-stone-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-stone-500"
-            />
-          )}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={step}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                {step === "name" && (
+                  <input
+                    type="text"
+                    placeholder="Your name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    autoFocus
+                    required
+                    className="w-full bg-stone-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-stone-500"
+                  />
+                )}
+                {step === "email" && (
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoFocus
+                    required
+                    className="w-full bg-stone-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-stone-500"
+                  />
+                )}
+                {step === "password" && (
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoFocus
+                    required
+                    minLength={8}
+                    className="w-full bg-stone-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-stone-500"
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
 
-          {step === "email" && (
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoFocus
-              required
-              className="w-full bg-stone-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-stone-500"
-            />
-          )}
+            {error && <p className="text-sm text-rose-400">{error}</p>}
 
-          {step === "password" && (
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoFocus
-              required
-              minLength={8}
-              className="w-full bg-stone-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-stone-500"
-            />
-          )}
+            <div className="flex gap-2">
+              {step !== "name" && (
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="w-1/3 bg-stone-100 text-stone-700 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors"
+                >
+                  Back
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-stone-200 text-stone-900 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                {step === "password"
+                  ? loading
+                    ? "Joining…"
+                    : "Continue"
+                  : "Next"}
+              </button>
+            </div>
 
-          {error && <p className="text-sm text-rose-400">{error}</p>}
+            <div className="flex justify-center gap-1.5 pt-2">
+              {(["name", "email", "password"] as Step[]).map((s) => (
+                <div
+                  key={s}
+                  className={`h-1.5 rounded-full transition-all ${
+                    s === step ? "w-6 bg-stone-800" : "w-1.5 bg-stone-300"
+                  }`}
+                />
+              ))}
+            </div>
 
-          <div className="flex gap-2">
-            {step !== "name" && (
+            <p className="text-sm text-center text-stone-500">
+              Already have an account?{" "}
               <button
                 type="button"
-                onClick={handleBack}
-                className="w-1/3 bg-stone-100 text-stone-700 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors"
+                onClick={onSwitchToLogin}
+                className="text-stone-800 underline underline-offset-2"
               >
-                Back
+                Log in
               </button>
-            )}
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-stone-200 text-stone-900 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
-            >
-              {step === "password"
-                ? loading
-                  ? "Joining…"
-                  : "Continue"
-                : "Next"}
-            </button>
-          </div>
-
-          <div className="flex justify-center gap-1.5 pt-2">
-            {(["name", "email", "password"] as Step[]).map((s) => (
-              <div
-                key={s}
-                className={`h-1.5 rounded-full transition-all ${
-                  s === step ? "w-6 bg-stone-800" : "w-1.5 bg-stone-300"
-                }`}
-              />
-            ))}
-          </div>
-
-          <p className="text-sm text-center text-stone-500">
-            Already have an account?{" "}
-            <button
-              type="button"
-              onClick={onSwitchToLogin}
-              className="text-stone-800 underline underline-offset-2"
-            >
-              Log in
-            </button>
-          </p>
-        </form>
+            </p>
+          </form>
+        </AuthTransition>
         <div className="absolute bottom-4 text-xs text-stone-500 text-center">
           <p>
             Created by{" "}
