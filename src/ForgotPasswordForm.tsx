@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { forgotPassword } from "./api";
 import { useToast } from "./Toast";
+import { motion } from "motion/react";
+import AuthTransition from "./AuthTransition";
 
 export default function ForgotPasswordForm({
   onBackToLogin,
@@ -29,7 +31,11 @@ export default function ForgotPasswordForm({
   }
 
   return (
-    <div className="flex h-screen bg-white text-stone-950 p-2">
+    <div
+      
+      onSubmit={handleSubmit}
+      className="flex h-screen bg-white text-stone-950 p-2"
+    >
       <div className="hidden md:block md:w-1/2 relative rounded-2xl">
         <img
           src="/bg.webp"
@@ -57,7 +63,12 @@ export default function ForgotPasswordForm({
               </button>
             </>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <AuthTransition>
+              <form
+              
+              onSubmit={handleSubmit}
+              className="space-y-4"
+            >
               <p className="text-base text-gray-500 text-center mb-4">
                 Enter your email and we'll send you a reset link.
               </p>
@@ -87,6 +98,7 @@ export default function ForgotPasswordForm({
                 </button>
               </p>
             </form>
+            </AuthTransition>
           )}
         </div>
       </div>

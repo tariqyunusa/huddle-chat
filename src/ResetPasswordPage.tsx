@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { resetPassword } from "./api";
 import { useToast } from "./Toast";
+import { motion } from "motion/react";
+import AuthTransition from "./AuthTransition";
 
 export default function ResetPasswordPage({
   token,
@@ -36,7 +38,10 @@ export default function ResetPasswordPage({
   }
 
   return (
-    <div className="flex h-screen bg-white text-stone-950 p-2">
+    <div
+      
+      className="flex h-screen bg-white text-stone-950 p-2"
+    >
       <div className="hidden md:block md:w-1/2 relative rounded-2xl">
         <img
           src="/bg.webp"
@@ -45,7 +50,9 @@ export default function ResetPasswordPage({
         />
       </div>
       <div className="flex flex-col justify-center items-center w-full md:w-1/2">
-        <form
+        <AuthTransition>
+          <form
+         
           onSubmit={handleSubmit}
           className="w-full max-w-sm space-y-4 px-6"
         >
@@ -79,6 +86,7 @@ export default function ResetPasswordPage({
             {loading ? "Updating…" : "Update password"}
           </button>
         </form>
+        </AuthTransition>
       </div>
     </div>
   );

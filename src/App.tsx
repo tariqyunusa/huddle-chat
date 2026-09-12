@@ -8,6 +8,7 @@ import ForgotPasswordForm from "./ForgotPasswordForm";
 import ResetPasswordPage from "./ResetPasswordPage";
 import { Menu } from "lucide-react";
 import SessionMenu from "./SessionMenu";
+import { AnimatePresence, motion } from "motion/react";
 
 function getSessionFromUrl(): string | null {
   const params = new URLSearchParams(window.location.search);
@@ -98,23 +99,30 @@ function App() {
   }
 
   if (!userId) {
-    if (authMode === "signup") {
-      return (
-        <SignupForm
-          onSignedUp={setUserId}
-          onSwitchToLogin={() => setAuthMode("login")}
-        />
-      );
-    }
-    if (authMode === "forgot") {
-      return <ForgotPasswordForm onBackToLogin={() => setAuthMode("login")} />;
-    }
     return (
-      <Login
-        onLoggedIn={setUserId}
-        onSwitchToSignup={() => setAuthMode("signup")}
-        onForgotPassword={() => setAuthMode("forgot")}
-      />
+      <AnimatePresence mode="wait">
+        {authMode === "signup" && (
+          <SignupForm
+            key="signup"
+            onSignedUp={setUserId}
+            onSwitchToLogin={() => setAuthMode("login")}
+          />
+        )}
+        {authMode === "forgot" && (
+          <ForgotPasswordForm
+            key="forgot"
+            onBackToLogin={() => setAuthMode("login")}
+          />
+        )}
+        {authMode === "login" && (
+          <Login
+            key="login"
+            onLoggedIn={setUserId}
+            onSwitchToSignup={() => setAuthMode("signup")}
+            onForgotPassword={() => setAuthMode("forgot")}
+          />
+        )}
+      </AnimatePresence>
     );
   }
 
