@@ -19,6 +19,7 @@ export default function SignupForm({
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
   const showToast = useToast();
 
   function handleNext(e: React.FormEvent) {
@@ -50,6 +51,7 @@ export default function SignupForm({
       localStorage.setItem("huddle_token", result.access_token);
       localStorage.setItem("huddle_user_id", result.user_id);
       localStorage.setItem("huddle_display_name", result.display_name);
+      localStorage.setItem("huddle_email_verified", String(result.email_verified));
       window.history.pushState({}, "", "/");
       onSignedUp(result.user_id);
     } catch (err) {

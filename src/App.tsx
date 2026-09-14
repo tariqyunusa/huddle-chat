@@ -10,6 +10,7 @@ import { Menu } from "lucide-react";
 import SessionMenu from "./SessionMenu";
 import { AnimatePresence} from "motion/react";
 import VerifyEmailPage from "./VerifyEmailPage";
+import VerifyEmailPendingScreen from "./VerifyEmailPendingScreen";
 
 function getSessionFromUrl(): string | null {
   const params = new URLSearchParams(window.location.search);
@@ -135,6 +136,19 @@ function App() {
       </AnimatePresence>
     );
   }
+
+  const emailVerified = localStorage.getItem("huddle_email_verified") === "true";
+
+if (userId && !emailVerified) {
+  return (
+    <VerifyEmailPendingScreen
+      onVerified={() => {
+        localStorage.setItem("huddle_email_verified", "true");
+        window.location.reload(); // simplest way to re-check state cleanly
+      }}
+    />
+  );
+}
 
   return (
     <div className="flex h-screen bg-white text-stone-800">
