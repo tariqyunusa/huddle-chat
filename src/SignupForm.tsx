@@ -3,6 +3,7 @@ import { signup, login } from "./api";
 import { useToast } from "./Toast";
 import { AnimatePresence, motion } from "motion/react";
 import AuthTransition from "./AuthTransition";
+import { Eye, EyeOff } from "lucide-react";
 
 type Step = "name" | "email" | "password";
 
@@ -19,7 +20,9 @@ export default function SignupForm({
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
   const showToast = useToast();
 
   function handleNext(e: React.FormEvent) {
@@ -43,6 +46,10 @@ export default function SignupForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!password.trim()) return;
+    if (password !== confirmPassword) {
+      showToast("error", "Passwords don't match.");
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
@@ -51,8 +58,10 @@ export default function SignupForm({
       localStorage.setItem("huddle_token", result.access_token);
       localStorage.setItem("huddle_user_id", result.user_id);
       localStorage.setItem("huddle_display_name", result.display_name);
-      localStorage.setItem("huddle_email_verified", String(result.email_verified));
-      window.history.pushState({}, "", "/");
+      localStorage.setItem(
+        "huddle_email_verified",
+        String(result.email_verified),
+      );
       onSignedUp(result.user_id);
     } catch (err) {
       showToast(
@@ -119,16 +128,42 @@ export default function SignupForm({
                   />
                 )}
                 {step === "password" && (
-                  <input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoFocus
-                    required
-                    minLength={8}
-                    className="w-full bg-stone-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-stone-500"
-                  />
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        autoFocus
+                        required
+                        minLength={8}
+                        className="w-full bg-stone-100 rounded-xl px-4 py-2 pr-10 text-sm outline-none focus:border-stone-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                      >
+                        {showPassword ? (
+                          <EyeOff size={16} />
+                        ) : (
+                          <Eye size={16} />
+                        )}
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Confirm password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        minLength={8}
+                        className="w-full bg-stone-100 rounded-xl px-4 py-2 pr-10 text-sm outline-none focus:border-stone-500"
+                      />
+                    </div>
+                  </div>
                 )}
               </motion.div>
             </AnimatePresence>

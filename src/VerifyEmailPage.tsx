@@ -7,7 +7,10 @@ export default function VerifyEmailPage({ token, onDone }: { token: string; onDo
 
   useEffect(() => {
     verifyEmail(token)
-      .then(() => setStatus("success"))
+      .then(() => {
+        localStorage.setItem("huddle_email_verified", "true");
+        setStatus("success");
+      })
       .catch((err) => {
         setStatus("error");
         setMessage(err instanceof Error ? err.message : "Something went wrong.");
