@@ -19,6 +19,7 @@ export type LoginResponse = {
   token_type: string;
   user_id: string;
   display_name: string;
+  email_verified: boolean;
 }
 
 export type UserSearchResult = { id: string; display_name: string };

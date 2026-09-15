@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { login } from "./api";
 import { useToast } from "./Toast";
-
+import { Eye, EyeOff } from "lucide-react";
 import AuthTransition from "./AuthTransition";
 
 export default function LoginForm({
@@ -17,6 +17,7 @@ export default function LoginForm({
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const showToast = useToast();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -28,7 +29,10 @@ export default function LoginForm({
       localStorage.setItem("huddle_token", result.access_token);
       localStorage.setItem("huddle_user_id", result.user_id);
       localStorage.setItem("huddle_display_name", result.display_name);
-      window.history.pushState({}, "", "/");
+      localStorage.setItem(
+        "huddle_email_verified",
+        String(result.email_verified),
+      );
       onLoggedIn(result.user_id);
     } catch (err) {
       showToast("error", "Invalid email or password.");
@@ -38,10 +42,7 @@ export default function LoginForm({
   }
 
   return (
-    <div
-      
-      className="flex h-screen bg-white text-stone-950 p-2"
-    >
+    <div className="flex h-screen bg-white text-stone-950 p-2">
       <div className="hidden md:block md:w-1/2 relative rounded-2xl">
         <img
           src="/bg.webp"
@@ -50,63 +51,72 @@ export default function LoginForm({
         />
       </div>
       <div className="flex flex-col justify-center items-center w-full md:w-1/2">
-       <AuthTransition>
-         <form
-          onSubmit={handleSubmit}
-          className="w-full max-w-sm space-y-4 px-6"
-        >
-          <h1 className="text-xl font-semibold tracking-tight text-center mb-2">
-            Welcome back
-          </h1>
-          <p className="text-base text-gray-500 text-center mb-4">
-            Log in to your Huddle account.
-          </p>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoFocus
-            required
-            className="w-full bg-stone-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-stone-500"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full bg-stone-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-stone-500"
-          />
-          {error && <p className="text-sm text-rose-400">{error}</p>}
-          <p className="text-sm text-center text-stone-500">
-            <button
-              type="button"
-              onClick={onForgotPassword}
-              className="text-stone-800 underline underline-offset-2"
-            >
-              Forgot password?
-            </button>
-          </p>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-stone-200 text-stone-900 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+        <AuthTransition>
+          <form
+            onSubmit={handleSubmit}
+            className="w-full max-w-sm space-y-4 px-6"
           >
-            {loading ? "Logging in…" : "Log in"}
-          </button>
-          <p className="text-sm text-center text-stone-500">
-            Don't have an account?{" "}
+            <h1 className="text-xl font-semibold tracking-tight text-center mb-2">
+              Welcome back
+            </h1>
+            <p className="text-base text-gray-500 text-center mb-4">
+              Log in to your Huddle account.
+            </p>
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoFocus
+              required
+              className="w-full bg-stone-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-stone-500"
+            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full bg-stone-100 rounded-xl px-4 py-2 pr-10 text-sm outline-none focus:border-stone-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            {error && <p className="text-sm text-rose-400">{error}</p>}
+            <p className="text-sm text-center text-stone-500">
+              <button
+                type="button"
+                onClick={onForgotPassword}
+                className="text-stone-800 underline underline-offset-2"
+              >
+                Forgot password?
+              </button>
+            </p>
             <button
-              type="button"
-              onClick={onSwitchToSignup}
-              className="text-stone-800 underline underline-offset-2"
+              type="submit"
+              disabled={loading}
+              className="w-full bg-stone-200 text-stone-900 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
             >
-              Sign up
+              {loading ? "Logging in…" : "Log in"}
             </button>
-          </p>
-        </form>
-       </AuthTransition>
+            <p className="text-sm text-center text-stone-500">
+              Don't have an account?{" "}
+              <button
+                type="button"
+                onClick={onSwitchToSignup}
+                className="text-stone-800 underline underline-offset-2"
+              >
+                Sign up
+              </button>
+            </p>
+          </form>
+        </AuthTransition>
       </div>
     </div>
   );
