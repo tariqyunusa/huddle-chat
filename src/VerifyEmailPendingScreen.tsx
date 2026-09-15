@@ -2,7 +2,7 @@ import { useState } from "react";
 import { resendVerification } from "./api";
 import { useToast } from "./Toast";
 
-export default function VerifyEmailPendingScreen({ onVerified }: { onVerified: () => void }) {
+export default function VerifyEmailPendingScreen() {
   const [resending, setResending] = useState(false);
   const showToast = useToast();
 
