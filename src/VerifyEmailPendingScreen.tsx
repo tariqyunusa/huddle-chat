@@ -2,7 +2,7 @@ import { useState } from "react";
 import { resendVerification } from "./api";
 import { useToast } from "./Toast";
 
-export default function VerifyEmailPendingScreen() {
+export default function VerifyEmailPendingScreen({ onVerified }: { onVerified: () => void }) {
   const [resending, setResending] = useState(false);
   const showToast = useToast();
 
@@ -27,7 +27,7 @@ export default function VerifyEmailPendingScreen() {
         </p>
         <div className="flex flex-col gap-2">
           <button
-            onClick={() => window.location.reload()}
+            onClick={onVerified}
             className="bg-stone-800 text-white rounded-xl px-4 py-2 text-sm font-medium"
           >
             I've verified — refresh
