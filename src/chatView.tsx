@@ -117,15 +117,15 @@ export default function ChatView({
   }, [messages, thinking]);
 
   function sendMessage() {
-    const trimmed = input.trim();
-    if (!trimmed) return;
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      showToast("error", "Not connected. Try refreshing the page.");
-      return;
-    }
-    wsRef.current.send(JSON.stringify({ content: trimmed }));
-    setInput("");
+  const trimmed = input.trim();
+  if (!trimmed) return;
+  if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+    showToast("error", "Not connected. Try refreshing the page.");
+    return;
   }
+  wsRef.current.send(JSON.stringify({ content: trimmed }));
+  setInput("");
+}
 
   return (
     <div className="flex flex-col h-screen bg-white">
