@@ -18,6 +18,7 @@ type ChatViewProps = {
   displayName: string;
   title: string | null;
   onTitleUpdate?: (sessionId: string, title: string) => void;
+  onUsageUpdate?: (tokensUsed: number, tokensLimit: number) => void;
 };
 
 const PARTICIPANT_COLORS = [
@@ -54,6 +55,7 @@ export default function ChatView({
   displayName,
   title,
   onTitleUpdate,
+  onUsageUpdate,
 }: ChatViewProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -83,6 +85,11 @@ export default function ChatView({
       }
       if (data.type === "session_title") {
         onTitleUpdate?.(sessionId, data.title);
+        return;
+      }
+
+      if (data.type === "usage") {
+        onUsageUpdate?.(data.tokens_used, data.tokens_limit);
         return;
       }
       if (data.type === "error") {
@@ -117,15 +124,15 @@ export default function ChatView({
   }, [messages, thinking]);
 
   function sendMessage() {
-  const trimmed = input.trim();
-  if (!trimmed) return;
-  if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-    showToast("error", "Not connected. Try refreshing the page.");
-    return;
+    const trimmed = input.trim();
+    if (!trimmed) return;
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      showToast("error", "Not connected. Try refreshing the page.");
+      return;
+    }
+    wsRef.current.send(JSON.stringify({ content: trimmed }));
+    setInput("");
   }
-  wsRef.current.send(JSON.stringify({ content: trimmed }));
-  setInput("");
-}
 
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -180,7 +187,10 @@ export default function ChatView({
       </div>
 
       {inviteModalOpen && (
-        <InviteModal sessionId={sessionId} onClose={() => setInviteModalOpen(false)} />
+        <InviteModal
+          sessionId={sessionId}
+          onClose={() => setInviteModalOpen(false)}
+        />
       )}
     </div>
   );
@@ -243,7 +253,10 @@ function MessageRow({ msg, isSelf }: { msg: ChatMessage; isSelf: boolean }) {
         {msg.author}
       </span>
       <div className="text-sm text-stone-700 leading-relaxed prose prose-sm prose-stone max-w-none">
-        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={markdownComponents}
+        >
           {msg.content}
         </ReactMarkdown>
       </div>

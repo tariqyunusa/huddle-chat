@@ -8,9 +8,10 @@ import ForgotPasswordForm from "./ForgotPasswordForm";
 import ResetPasswordPage from "./ResetPasswordPage";
 import { Menu } from "lucide-react";
 import SessionMenu from "./SessionMenu";
-import { AnimatePresence} from "motion/react";
+import { AnimatePresence } from "motion/react";
 import VerifyEmailPage from "./VerifyEmailPage";
 import VerifyEmailPendingScreen from "./VerifyEmailPendingScreen";
+import UsageIndicator from "./UsageIndicator";
 
 function getSessionFromUrl(): string | null {
   const params = new URLSearchParams(window.location.search);
@@ -41,6 +42,15 @@ function App() {
   const showToast = useToast();
   const [creating, setCreating] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [usage, setUsage] = useState<{
+    tokensUsed: number;
+    tokensLimit: number;
+  } | null>(null);
+
+  function handleUsageUpdate(tokensUsed: number, tokensLimit: number) {
+    console.log("Usage update received:", tokensUsed, tokensLimit);
+    setUsage({ tokensUsed, tokensLimit });
+  }
 
   useEffect(() => {
     if (!userId) return;
@@ -101,13 +111,13 @@ function App() {
   }
 
   if (window.location.pathname === "/verify-email" && resetToken) {
-  return (
-    <VerifyEmailPage
-      token={resetToken}
-      onDone={() => window.history.pushState({}, "", "/")}
-    />
-  );
-}
+    return (
+      <VerifyEmailPage
+        token={resetToken}
+        onDone={() => window.history.pushState({}, "", "/")}
+      />
+    );
+  }
 
   if (!userId) {
     return (
@@ -137,18 +147,19 @@ function App() {
     );
   }
 
-  const emailVerified = localStorage.getItem("huddle_email_verified") === "true";
+  const emailVerified =
+    localStorage.getItem("huddle_email_verified") === "true";
 
-if (userId && !emailVerified) {
-  return (
-    <VerifyEmailPendingScreen
-      onVerified={() => {
-        localStorage.setItem("huddle_email_verified", "true");
-        window.location.reload(); // simplest way to re-check state cleanly
-      }}
-    />
-  );
-}
+  if (userId && !emailVerified) {
+    return (
+      <VerifyEmailPendingScreen
+        onVerified={() => {
+          localStorage.setItem("huddle_email_verified", "true");
+          window.location.reload(); // simplest way to re-check state cleanly
+        }}
+      />
+    );
+  }
 
   return (
     <div className="flex h-screen bg-white text-stone-800">
@@ -212,8 +223,14 @@ if (userId && !emailVerified) {
           ))}
         </div>
 
-        <div className="px-4 py-3 border-t border-stone-200">
+        <div className="px-4 py-3 border-t border-stone-200 flex items-center justify-between">
           <p className="text-sm font-medium text-stone-700">{displayName}</p>
+          {usage && (
+            <UsageIndicator
+              tokensUsed={usage.tokensUsed}
+              tokensLimit={usage.tokensLimit}
+            />
+          )}
         </div>
       </aside>
 
@@ -237,6 +254,7 @@ if (userId && !emailVerified) {
                 sessions.find((s) => s.id === activeSessionId)?.title ?? null
               }
               onTitleUpdate={handleTitleUpdate}
+              onUsageUpdate={handleUsageUpdate}
             />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center gap-4">
