@@ -36,6 +36,7 @@ function App() {
     localStorage.getItem("huddle_display_name") ?? "Anonymous",
   );
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
+  const [justSignedUp, setJustSignedUp] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(
     getSessionFromUrl(),
   );
@@ -124,8 +125,10 @@ function App() {
       <AnimatePresence mode="wait">
         {authMode === "signup" && (
           <SignupForm
-            key="signup"
-            onSignedUp={setUserId}
+            onSignedUp={(id) => {
+              setJustSignedUp(true);
+              setUserId(id);
+            }}
             onSwitchToLogin={() => setAuthMode("login")}
           />
         )}
@@ -147,18 +150,18 @@ function App() {
     );
   }
 
-  const emailVerified =
-    localStorage.getItem("huddle_email_verified") === "true";
-
-  if (userId && !emailVerified) {
-    return (
-      <VerifyEmailPendingScreen
-        onVerified={() => {
-          localStorage.setItem("huddle_email_verified", "true");
-          window.location.reload(); // simplest way to re-check state cleanly
-        }}
-      />
-    );
+  if (userId && justSignedUp) {
+    const emailVerified =
+      localStorage.getItem("huddle_email_verified") === "true";
+    if (!emailVerified) {
+      return (
+        <VerifyEmailPendingScreen
+          onVerified={() => {
+            setJustSignedUp(false);
+          }}
+        />
+      );
+    }
   }
 
   return (
