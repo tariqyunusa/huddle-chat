@@ -29,6 +29,12 @@ function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+export async function getMe(): Promise<{ id: string; email_verified: boolean; display_name: string }> {
+  const res = await fetch(`${BASE_URL}/me`, { headers: authHeaders() });
+  if (!res.ok) throw new Error("Failed to fetch user status");
+  return res.json();
+}
+
 export async function signup(email: string, name: string, password: string): Promise<{ id: string }> {
   const res = await fetch(`${BASE_URL}/users`, {
     method: "POST",
