@@ -27,6 +27,7 @@ export default function LoginForm({
     try {
       const result = await login(email, password);
       localStorage.setItem("huddle_token", result.access_token);
+      localStorage.setItem("huddle_refresh_token", result.refresh_token);
       localStorage.setItem("huddle_user_id", result.user_id);
       localStorage.setItem("huddle_display_name", result.display_name);
       localStorage.setItem(
@@ -35,7 +36,14 @@ export default function LoginForm({
       );
       onLoggedIn(result.user_id);
     } catch (err) {
-      showToast("error", "Invalid email or password.");
+      if (err instanceof Error && err.message === "RATE_LIMITED") {
+        showToast(
+          "error",
+          "Too many login attempts. Please wait a few minutes and try again.",
+        );
+      } else {
+        showToast("error", "Invalid email or password.");
+      }
     } finally {
       setLoading(false);
     }

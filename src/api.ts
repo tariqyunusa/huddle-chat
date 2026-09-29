@@ -16,7 +16,7 @@ export type Participant = {
 
 export type LoginResponse = {
   access_token: string;
-  token_type: string;
+  refresh_token: string;
   user_id: string;
   display_name: string;
   email_verified: boolean;
@@ -77,14 +77,22 @@ export async function fetchParticipants(sessionId: string): Promise<Participant[
 
 
 
-export async function login(email:string, password: string): Promise<LoginResponse> {
+export async function login(email: string, password: string): Promise<LoginResponse> {
   const res = await fetch(`${BASE_URL}/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json"},
-    body: JSON.stringify({ email, password})
-  })
-  if(!res.ok) throw new Error(`Login failed: ${res.status}`)
-  return res.json();
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) {
+    if (res.status === 429) {
+      throw new Error("RATE_LIMITED");
+    }
+    throw new Error(`Login failed: ${res.status}`);
+  }
+  const data: LoginResponse = await res.json();
+  localStorage.setItem("huddle_token", data.access_token);
+  localStorage.setItem("huddle_refresh_token", data.refresh_token);
+  return data;
 }
 
 export async function forgotPassword(email: string): Promise< {message: string}> {

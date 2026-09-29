@@ -54,8 +54,16 @@ export default function SignupForm({
     setLoading(true);
     try {
       await signup(email, name, password);
+    } catch (err) {
+      showToast("error", err instanceof Error ? err.message : "Signup failed. Try again.");
+      setLoading(false);
+      return;
+    }
+
+    try {
       const result = await login(email, password);
       localStorage.setItem("huddle_token", result.access_token);
+      localStorage.setItem("huddle_refresh_token", result.refresh_token);
       localStorage.setItem("huddle_user_id", result.user_id);
       localStorage.setItem("huddle_display_name", result.display_name);
       localStorage.setItem(
@@ -64,10 +72,11 @@ export default function SignupForm({
       );
       onSignedUp(result.user_id);
     } catch (err) {
-      showToast(
-        "error",
-        err instanceof Error ? err.message : "Could not sign up. Try again.",
-      );
+      if (err instanceof Error && err.message === "RATE_LIMITED") {
+        showToast("error", "Too many login attempts. Please wait a few minutes and try again.");
+      } else {
+        showToast("error", "Account created, but login failed. Try logging in manually.");
+      }
     } finally {
       setLoading(false);
     }
