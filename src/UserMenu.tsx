@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   ChevronDown,
   Settings,
@@ -59,40 +60,50 @@ export default function UserMenu({
             {PLAN_LABELS[plan] ?? plan}
           </p>
         </div>
-        <ChevronDown
-          size={14}
-          className={`text-stone-400 transition-transform ${open ? "rotate-180" : ""}`}
-        />
+        <motion.div
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
+        >
+          <ChevronDown size={14} className="text-stone-400" />
+        </motion.div>
       </button>
 
-      {open && (
-        <div className="absolute bottom-full left-0 mb-2 w-56 bg-white rounded-xl border border-stone-200 shadow-lg py-1 z-50">
-          {items.map(({ icon: Icon, label, onClick }) => (
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.97 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="absolute bottom-full left-0 mb-2 w-56 bg-white rounded-xl border border-stone-200 shadow-lg py-1 z-50 origin-bottom-left"
+          >
+            {items.map(({ icon: Icon, label, onClick }) => (
+              <button
+                key={label}
+                onClick={() => {
+                  onClick();
+                  setOpen(false);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-stone-600 hover:bg-stone-50 transition-colors cursor-pointer"
+              >
+                <Icon size={15} className="text-stone-400" />
+                {label}
+              </button>
+            ))}
+            <div className="h-px bg-stone-100 my-1" />
             <button
-              key={label}
               onClick={() => {
-                onClick();
+                onLogout();
                 setOpen(false);
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-stone-600 hover:bg-stone-50 transition-colors cursor-pointer"
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
             >
-              <Icon size={15} className="text-stone-400" />
-              {label}
+              <LogOut size={15} />
+              Log out
             </button>
-          ))}
-          <div className="h-px bg-stone-100 my-1" />
-          <button
-            onClick={() => {
-              onLogout();
-              setOpen(false);
-            }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
-          >
-            <LogOut size={15} />
-            Log out
-          </button>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
