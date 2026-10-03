@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import SignupForm from "./SignupForm";
 import ChatView from "./chatView";
-import { fetchSessions, createSession, type SessionSummary } from "./api";
+import {
+  fetchSessions,
+  createSession,
+  type SessionSummary,
+  getMe,
+} from "./api";
 import Login from "./Login";
 import { useToast } from "./Toast";
 import ForgotPasswordForm from "./ForgotPasswordForm";
@@ -12,6 +17,8 @@ import { AnimatePresence } from "motion/react";
 import VerifyEmailPage from "./VerifyEmailPage";
 import VerifyEmailPendingScreen from "./VerifyEmailPendingScreen";
 import UsageIndicator from "./UsageIndicator";
+import { logout as apiLogout } from "./api";
+import UserMenu from "./UserMenu";
 
 function getSessionFromUrl(): string | null {
   const params = new URLSearchParams(window.location.search);
@@ -43,10 +50,30 @@ function App() {
   const showToast = useToast();
   const [creating, setCreating] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userPlan, setUserPlan] = useState<string>(
+    localStorage.getItem("huddle_plan") ?? "free",
+  );
   const [usage, setUsage] = useState<{
     tokensUsed: number;
     tokensLimit: number;
   } | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    getMe()
+      .then((me) => setUserPlan(me.plan))
+      .catch(() => {});
+  }, [userId]);
+
+  async function handleLogout() {
+    await apiLogout();
+    setUserId(null);
+    setSessions([]);
+    setActiveSessionId(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("session");
+    window.history.pushState({}, "", url);
+  }
 
   function handleUsageUpdate(tokensUsed: number, tokensLimit: number) {
     console.log("Usage update received:", tokensUsed, tokensLimit);
@@ -165,7 +192,7 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen bg-white text-stone-800">
+    <div className="flex h-screen w-screen bg-white  text-stone-800 ">
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/30 z-30 md:hidden"
@@ -226,8 +253,12 @@ function App() {
           ))}
         </div>
 
-        <div className="px-4 py-3 border-t border-stone-200 flex items-center justify-between">
-          <p className="text-sm font-medium text-stone-700">{displayName}</p>
+        <div className="px-4 py-3  flex items-center justify-between">
+          <UserMenu
+            displayName={displayName}
+            plan={userPlan}
+            onLogout={handleLogout}
+          />
           {usage && (
             <UsageIndicator
               tokensUsed={usage.tokensUsed}

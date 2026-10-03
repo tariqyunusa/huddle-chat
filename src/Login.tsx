@@ -26,8 +26,6 @@ export default function LoginForm({
     setLoading(true);
     try {
       const result = await login(email, password);
-      localStorage.setItem("huddle_token", result.access_token);
-      localStorage.setItem("huddle_refresh_token", result.refresh_token);
       localStorage.setItem("huddle_user_id", result.user_id);
       localStorage.setItem("huddle_display_name", result.display_name);
       localStorage.setItem(
