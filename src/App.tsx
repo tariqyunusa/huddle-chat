@@ -19,6 +19,7 @@ import VerifyEmailPendingScreen from "./VerifyEmailPendingScreen";
 import UsageIndicator from "./UsageIndicator";
 import { logout as apiLogout } from "./api";
 import UserMenu from "./UserMenu";
+import ThemeMenu from "./ThemeMenu";
 
 function getSessionFromUrl(): string | null {
   const params = new URLSearchParams(window.location.search);
@@ -259,12 +260,15 @@ function App() {
             plan={userPlan}
             onLogout={handleLogout}
           />
-          {usage && (
-            <UsageIndicator
-              tokensUsed={usage.tokensUsed}
-              tokensLimit={usage.tokensLimit}
-            />
-          )}
+           <div className="flex items-center gap-1">
+    <ThemeMenu />
+    {usage && (
+      <UsageIndicator
+        tokensUsed={usage.tokensUsed}
+        tokensLimit={usage.tokensLimit}
+      />
+    )}
+  </div>
         </div>
       </aside>
 
