@@ -243,6 +243,34 @@ export async function inviteToSession(
   }
 }
 
+export async function createSessionInviteLink(
+  sessionId: string,
+): Promise<{ token: string }> {
+  const res = await apiFetch(`/sessions/${sessionId}/invite-link`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.detail ?? "Couldn't create an invite link");
+  }
+  return res.json();
+}
+
+export async function redeemSessionInviteLink(
+  token: string,
+): Promise<SessionSummary> {
+  const res = await apiFetch("/sessions/invite-link/redeem", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.detail ?? "This invite link couldn't be redeemed");
+  }
+  return res.json();
+}
+
 export async function renameSession(
   sessionId: string,
   title: string,

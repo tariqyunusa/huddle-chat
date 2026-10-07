@@ -1,6 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X as CloseIcon, Mail, Link2, Check } from "lucide-react";
-import { inviteToSession, searchUsers, type UserSearchResult } from "./api";
+import {
+  createSessionInviteLink,
+  inviteToSession,
+  searchUsers,
+  type UserSearchResult,
+} from "./api";
 import { useToast } from "./Toast";
 import {NewTwitterIcon, SnapchatIcon, WhatsappIcon} from 'hugeicons-react'
 
@@ -15,13 +20,35 @@ export default function InviteModal({ sessionId, onClose }: InviteModalProps) {
   const [results, setResults] = useState<UserSearchResult[]>([]);
   const [sending, setSending] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [creatingInviteLink, setCreatingInviteLink] = useState(true);
   const showToast = useToast();
 
-  function getInviteUrl() {
-    const url = new URL(window.location.href);
-    url.searchParams.set("session", sessionId);
-    return url.toString();
-  }
+  useEffect(() => {
+    let cancelled = false;
+    setCreatingInviteLink(true);
+    createSessionInviteLink(sessionId)
+      .then(({ token }) => {
+        if (cancelled) return;
+        const url = new URL(window.location.pathname, window.location.origin);
+        url.searchParams.set("invite", token);
+        setInviteUrl(url.toString());
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          showToast(
+            "error",
+            error instanceof Error ? error.message : "Couldn't create an invite link",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setCreatingInviteLink(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId, showToast]);
 
   async function handleNameSearch(value: string) {
     setNameQuery(value);
@@ -65,25 +92,33 @@ export default function InviteModal({ sessionId, onClose }: InviteModalProps) {
     }
   }
 
-  function copyLink() {
-    navigator.clipboard.writeText(getInviteUrl());
-    setCopied(true);
-    showToast("success", "Link copied to clipboard");
-    setTimeout(() => setCopied(false), 1500);
+  async function copyLink() {
+    if (!inviteUrl) return;
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setCopied(true);
+      showToast("success", "Link copied to clipboard");
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      showToast("error", "Couldn't copy the invite link");
+    }
   }
 
   function shareViaWhatsApp() {
-    const text = encodeURIComponent(`Join my Huddle session: ${getInviteUrl()}`);
+    if (!inviteUrl) return;
+    const text = encodeURIComponent(`Join my Huddle session: ${inviteUrl}`);
     window.open(`https://wa.me/?text=${text}`, "_blank");
   }
 
   function shareViaX() {
-    const text = encodeURIComponent(`Join my Huddle session: ${getInviteUrl()}`);
+    if (!inviteUrl) return;
+    const text = encodeURIComponent(`Join my Huddle session: ${inviteUrl}`);
     window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank");
   }
 
   function shareViaSnapchat() {
-    const url = encodeURIComponent(getInviteUrl());
+    if (!inviteUrl) return;
+    const url = encodeURIComponent(inviteUrl);
     window.open(`https://www.snapchat.com/scan?attachmentUrl=${url}`, "_blank");
   }
 
@@ -158,16 +193,18 @@ export default function InviteModal({ sessionId, onClose }: InviteModalProps) {
           <div className="flex items-center gap-3">
             <button
               onClick={copyLink}
-              className="flex flex-col items-center gap-1 text-xs text-stone-600 cursor-pointer"
+              disabled={!inviteUrl || creatingInviteLink}
+              className="flex flex-col items-center gap-1 text-xs text-stone-600 cursor-pointer disabled:opacity-50"
             >
               <span className="w-10 h-10 rounded-full bg-stone-100 flex items-center cursor-pointer justify-center">
                 {copied ? <Check size={16} /> : <Link2 size={16} />}
               </span>
-              Copy link
+              {creatingInviteLink ? "Preparing…" : "Copy link"}
             </button>
             <button
               onClick={shareViaWhatsApp}
-              className="flex flex-col items-center gap-1 text-xs text-stone-600 cursor-pointer"
+              disabled={!inviteUrl || creatingInviteLink}
+              className="flex flex-col items-center gap-1 text-xs text-stone-600 cursor-pointer disabled:opacity-50"
             >
               <span className="w-10 h-10 rounded-full bg-stone-100 flex items-center cursor-pointer justify-center">
                 <WhatsappIcon size={16} />
@@ -176,7 +213,8 @@ export default function InviteModal({ sessionId, onClose }: InviteModalProps) {
             </button>
             <button
               onClick={shareViaX}
-              className="flex flex-col items-center gap-1 text-xs text-stone-600 cursor-pointer"
+              disabled={!inviteUrl || creatingInviteLink}
+              className="flex flex-col items-center gap-1 text-xs text-stone-600 cursor-pointer disabled:opacity-50"
             >
               <span className="w-10 h-10 rounded-full bg-stone-100 flex items-center cursor-pointer justify-center font-semibold text-sm">
                 <NewTwitterIcon size={16} />
@@ -185,7 +223,8 @@ export default function InviteModal({ sessionId, onClose }: InviteModalProps) {
             </button>
             <button
               onClick={shareViaSnapchat}
-              className="flex flex-col items-center gap-1 cursor-pointer text-xs text-stone-600"
+              disabled={!inviteUrl || creatingInviteLink}
+              className="flex flex-col items-center gap-1 cursor-pointer text-xs text-stone-600 disabled:opacity-50"
             >
               <span className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center">
                 <SnapchatIcon size={16} />
