@@ -32,6 +32,9 @@ export default function ThemeMenu() {
         onClick={() => setOpen((prev) => !prev)}
         className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors cursor-pointer"
         title="Theme"
+        aria-label={`Theme: ${theme}`}
+        aria-expanded={open}
+        aria-haspopup="menu"
       >
         <CurrentIcon size={15} />
       </button>
@@ -44,6 +47,7 @@ export default function ThemeMenu() {
             exit={{ opacity: 0, y: 6, scale: 0.97 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
             className="absolute bottom-full right-0 mb-2 w-44 bg-white rounded-xl border border-stone-200 shadow-lg py-1 z-50 origin-bottom-right"
+            role="menu"
           >
             {OPTIONS.map(({ value, label, icon: Icon }) => (
               <button
@@ -53,6 +57,8 @@ export default function ThemeMenu() {
                   setOpen(false);
                 }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-stone-600 hover:bg-stone-50 transition-colors cursor-pointer"
+                role="menuitemradio"
+                aria-checked={theme === value}
               >
                 <Icon size={15} className="text-stone-400" />
                 <span className="flex-1 text-left">{label}</span>
