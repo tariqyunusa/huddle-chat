@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import SignupForm from "./SignupForm";
 import ChatView from "./chatView";
 import {
@@ -6,6 +6,7 @@ import {
   createSession,
   type SessionSummary,
   getMe,
+  redeemSessionInviteLink,
 } from "./api";
 import Login from "./Login";
 import { useToast } from "./Toast";
@@ -26,6 +27,11 @@ function getSessionFromUrl(): string | null {
   return params.get("session");
 }
 
+function getInviteTokenFromUrl(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("invite");
+}
+
 function getResetTokenFromUrl(): string | null {
   const params = new URLSearchParams(window.location.search);
   return params.get("token");
@@ -34,6 +40,9 @@ function getResetTokenFromUrl(): string | null {
 function App() {
   const [userId, setUserId] = useState<string | null>(
     localStorage.getItem("huddle_user_id"),
+  );
+  const [verificationPending, setVerificationPending] = useState(
+    () => !!localStorage.getItem("huddle_user_id") && localStorage.getItem("huddle_email_verified") !== "true",
   );
 
   const [authMode, setAuthMode] = useState<"signup" | "login" | "forgot">(
@@ -44,7 +53,9 @@ function App() {
     localStorage.getItem("huddle_display_name") ?? "Anonymous",
   );
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
-  const [justSignedUp, setJustSignedUp] = useState(false);
+  const inviteToken = getInviteTokenFromUrl();
+  const redeemingInviteToken = useRef<string | null>(null);
+  const sessionsRequestVersion = useRef(0);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(
     getSessionFromUrl(),
   );
@@ -66,6 +77,42 @@ function App() {
       .catch(() => {});
   }, [userId]);
 
+  useEffect(() => {
+    if (
+      !userId ||
+      !inviteToken ||
+      localStorage.getItem("huddle_email_verified") !== "true" ||
+      redeemingInviteToken.current === inviteToken
+    ) {
+      return;
+    }
+
+    redeemingInviteToken.current = inviteToken;
+    redeemSessionInviteLink(inviteToken)
+      .then((session) => {
+        sessionsRequestVersion.current += 1;
+        setSessions((previous) => [
+          session,
+          ...previous.filter((item) => item.id !== session.id),
+        ]);
+        setActiveSessionId(session.id);
+        const url = new URL(window.location.href);
+        url.searchParams.delete("invite");
+        url.searchParams.set("session", session.id);
+        window.history.replaceState({}, "", url);
+      })
+      .catch((error: unknown) => {
+        showToast(
+          "error",
+          error instanceof Error ? error.message : "This invite link couldn't be opened.",
+        );
+        const url = new URL(window.location.href);
+        url.searchParams.delete("invite");
+        window.history.replaceState({}, "", url);
+        redeemingInviteToken.current = null;
+      });
+  }, [userId, inviteToken, showToast]);
+
   async function handleLogout() {
     await apiLogout();
     setUserId(null);
@@ -83,8 +130,13 @@ function App() {
 
   useEffect(() => {
     if (!userId) return;
+    const requestVersion = ++sessionsRequestVersion.current;
     fetchSessions()
-      .then(setSessions)
+      .then((loadedSessions) => {
+        if (sessionsRequestVersion.current === requestVersion) {
+          setSessions(loadedSessions);
+        }
+      })
       .catch(() =>
         showToast("error", "Couldn't load your sessions. Try refreshing."),
       );
@@ -154,8 +206,8 @@ function App() {
         {authMode === "signup" && (
           <SignupForm
             onSignedUp={(id) => {
-              setJustSignedUp(true);
               setUserId(id);
+              setVerificationPending(localStorage.getItem("huddle_email_verified") !== "true");
             }}
             onSwitchToLogin={() => setAuthMode("login")}
           />
@@ -169,7 +221,10 @@ function App() {
         {authMode === "login" && (
           <Login
             key="login"
-            onLoggedIn={setUserId}
+            onLoggedIn={(id) => {
+              setUserId(id);
+              setVerificationPending(localStorage.getItem("huddle_email_verified") !== "true");
+            }}
             onSwitchToSignup={() => setAuthMode("signup")}
             onForgotPassword={() => setAuthMode("forgot")}
           />
@@ -178,18 +233,12 @@ function App() {
     );
   }
 
-  if (userId && justSignedUp) {
-    const emailVerified =
-      localStorage.getItem("huddle_email_verified") === "true";
-    if (!emailVerified) {
-      return (
-        <VerifyEmailPendingScreen
-          onVerified={() => {
-            setJustSignedUp(false);
-          }}
-        />
-      );
-    }
+  if (userId && verificationPending) {
+    return (
+      <VerifyEmailPendingScreen
+        onVerified={() => setVerificationPending(false)}
+      />
+    );
   }
 
   return (
