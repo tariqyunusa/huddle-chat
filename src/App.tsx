@@ -21,6 +21,8 @@ import UsageIndicator from "./UsageIndicator";
 import { logout as apiLogout } from "./api";
 import UserMenu from "./UserMenu";
 import ThemeMenu from "./ThemeMenu";
+import BillingModal from "./BillingModal";
+import BillingCallbackPage from "./BillingCallbackPage";
 
 function getSessionFromUrl(): string | null {
   const params = new URLSearchParams(window.location.search);
@@ -46,7 +48,7 @@ function App() {
   );
 
   const [authMode, setAuthMode] = useState<"signup" | "login" | "forgot">(
-    "signup",
+    () => window.location.pathname === "/billing/callback" ? "login" : "signup",
   );
   const resetToken = getResetTokenFromUrl();
   const [displayName] = useState<string>(
@@ -62,6 +64,7 @@ function App() {
   const showToast = useToast();
   const [creating, setCreating] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [billingOpen, setBillingOpen] = useState(false);
   const [userPlan, setUserPlan] = useState<string>(
     localStorage.getItem("huddle_plan") ?? "free",
   );
@@ -241,6 +244,10 @@ function App() {
     );
   }
 
+  if (window.location.pathname === "/billing/callback") {
+    return <BillingCallbackPage />;
+  }
+
   return (
     <div className="flex h-screen w-screen bg-white  text-stone-800 ">
       {sidebarOpen && (
@@ -308,6 +315,7 @@ function App() {
             displayName={displayName}
             plan={userPlan}
             onLogout={handleLogout}
+            onBilling={() => setBillingOpen(true)}
           />
            <div className="flex items-center gap-1">
     <ThemeMenu />
@@ -320,6 +328,10 @@ function App() {
   </div>
         </div>
       </aside>
+
+      {billingOpen && (
+        <BillingModal currentPlan={userPlan} onClose={() => setBillingOpen(false)} />
+      )}
 
       <div className="flex-1 flex flex-col min-w-0">
         <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-stone-200">

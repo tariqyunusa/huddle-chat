@@ -256,6 +256,21 @@ export async function createSessionInviteLink(
   return res.json();
 }
 
+export async function startSubscription(
+  plan: "standard" | "pro",
+): Promise<string> {
+  const res = await apiFetch(`/billing/subscribe?plan=${plan}`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.detail ?? "Couldn't start your subscription");
+  }
+  const data: { checkout_url?: string } = await res.json();
+  if (!data.checkout_url) throw new Error("Bachs didn't return a checkout link");
+  return data.checkout_url;
+}
+
 export async function redeemSessionInviteLink(
   token: string,
 ): Promise<SessionSummary> {

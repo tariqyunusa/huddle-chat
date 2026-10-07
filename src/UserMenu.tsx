@@ -8,6 +8,7 @@ import {
   HelpCircle,
   Shield,
   Grid3x3,
+  CreditCard,
 } from "lucide-react";
 
 const PLAN_LABELS: Record<string, string> = {
@@ -20,10 +21,12 @@ export default function UserMenu({
   displayName,
   plan,
   onLogout,
+  onBilling,
 }: {
   displayName: string;
   plan: string;
   onLogout: () => void;
+  onBilling: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -90,6 +93,16 @@ export default function UserMenu({
                 {label}
               </button>
             ))}
+            <button
+              onClick={() => {
+                onBilling();
+                setOpen(false);
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-stone-600 hover:bg-stone-50 transition-colors cursor-pointer"
+            >
+              <CreditCard size={15} className="text-stone-400" />
+              Plans and billing
+            </button>
             <div className="h-px bg-stone-100 my-1" />
             <button
               onClick={() => {
