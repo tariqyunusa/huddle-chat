@@ -14,17 +14,26 @@ html.dark {
 
 /* Keep the existing light palette intact while mapping its surfaces and text
    to a coordinated dark palette across every screen and overlay. */
-.dark .bg-white { background-color: #0c0a09; }
-.dark .bg-stone-50 { background-color: #1c1917; }
-.dark .bg-stone-100 { background-color: #292524; }
-.dark .bg-stone-200 { background-color: #44403c; }
-.dark .bg-stone-800 { background-color: #e7e5e4; }
-.dark .bg-stone-800.text-white { color: #1c1917; }
-.dark .hover\:bg-white:hover { background-color: #292524; }
-.dark .hover\:bg-stone-50:hover { background-color: #292524; }
-.dark .hover\:bg-stone-100:hover { background-color: #292524; }
-.dark .hover\:bg-stone-200:hover { background-color: #57534e; }
-.dark .hover\:bg-stone-900:hover { background-color: #d6d3d1; }
+.dark .bg-white,
+.dark .bg-stone-50,
+.dark .bg-stone-100,
+.dark .bg-stone-200,
+.dark .bg-stone-700,
+.dark .bg-stone-800,
+.dark .bg-gray-100,
+.dark .bg-gray-200,
+.dark .bg-neutral-100,
+.dark .bg-neutral-200,
+.dark .bg-zinc-100,
+.dark .bg-zinc-200 { background-color: #000; }
+.dark .bg-stone-800.text-white { color: #fff; }
+.dark .hover\:bg-white:hover,
+.dark .hover\:bg-stone-50:hover,
+.dark .hover\:bg-stone-100:hover,
+.dark .hover\:bg-stone-200:hover,
+.dark .hover\:bg-stone-900:hover,
+.dark .hover\:bg-gray-100:hover,
+.dark .hover\:bg-gray-200:hover { background-color: #000; }
 
 .dark .text-stone-900,
 .dark .text-stone-800 { color: #f5f5f4; }
@@ -32,7 +41,7 @@ html.dark {
 .dark .text-stone-600 { color: #d6d3d1; }
 .dark .text-stone-500 { color: #a8a29e; }
 .dark .text-stone-400 { color: #a8a29e; }
-.dark .text-stone-300 { color: #d6d3d1; }
+.dark .text-stone-300 { color: #1d1d1d; }
 .dark .hover\:text-stone-600:hover { color: #f5f5f4; }
 
 .dark .border-stone-100 { border-color: #292524; }
