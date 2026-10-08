@@ -271,6 +271,23 @@ export async function startSubscription(
   return data.checkout_url;
 }
 
+export type PlanPricing = {
+  amount: string;
+  currency: string;
+  interval: string | null;
+  frequency: number;
+};
+
+export async function getPlanPricing(): Promise<Record<"standard" | "pro", PlanPricing>> {
+  const res = await apiFetch("/billing/plans");
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.detail ?? "Couldn't load current plan prices");
+  }
+  const data: { plans: Record<"standard" | "pro", PlanPricing> } = await res.json();
+  return data.plans;
+}
+
 export async function redeemSessionInviteLink(
   token: string,
 ): Promise<SessionSummary> {
