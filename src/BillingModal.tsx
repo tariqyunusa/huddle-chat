@@ -241,7 +241,7 @@ export default function BillingModal({
                           type="button"
                           onClick={() => choosePlan(plan.id as Plan)}
                           disabled={loadingPlan !== null}
-                          className={`mt-4 w-full rounded-full px-4 py-3 text-sm font-semibold transition-colors disabled:cursor-wait ${plan.id === "standard" ? "bg-black text-white hover:brightness-110" : plan.id === "pro" ? "dark:bg-[#ffffff] bg-black dark:text-white text-white" : "bg-gray-100 text-stone-950 hover:bg-gray-200"}`}
+                          className={`mt-4 w-full rounded-full px-4 py-3 text-sm font-semibold transition-colors disabled:cursor-wait ${plan.id === "standard" ? "bg-black text-white hover:brightness-110" : plan.id === "pro" ? "dark:bg-[#ffffff] bg-black dark:text-black text-white" : "bg-gray-100 text-stone-950 hover:bg-gray-200"}`}
                         >
                           {loadingPlan === plan.id
                             ? "Opening checkout…"
