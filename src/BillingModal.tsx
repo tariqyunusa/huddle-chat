@@ -61,7 +61,9 @@ export default function BillingModal({
 }) {
   const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [pricing, setPricing] = useState<Record<Plan, PlanPricing> | null>(null);
+  const [pricing, setPricing] = useState<Record<Plan, PlanPricing> | null>(
+    null,
+  );
   const [pricingError, setPricingError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -73,7 +75,9 @@ export default function BillingModal({
       .catch((err: unknown) => {
         if (!cancelled) {
           setPricingError(
-            err instanceof Error ? err.message : "Couldn't load current plan prices",
+            err instanceof Error
+              ? err.message
+              : "Couldn't load current plan prices",
           );
         }
       });
@@ -136,7 +140,7 @@ export default function BillingModal({
             type="button"
             onClick={onClose}
             aria-label="Close upgrade plans"
-            className="rounded-md p-1.5 text-stone-400 transition-colors hover:bg-stone-800 hover:text-white"
+            className="no-inset rounded-md p-1.5 text-stone-400 transition-colors cursor-pointer"
           >
             <X size={20} />
           </button>
@@ -145,11 +149,15 @@ export default function BillingModal({
         <div className="flex-1 overflow-y-auto px-5 pb-6 pt-7 sm:px-8 sm:pt-5 lg:px-12">
           <div className="mx-auto max-w-355">
             <div className="mb-8 text-center sm:mb-10">
-              <div className="mx-auto mb-5 inline-flex rounded-full  bg-stone-300 p-1  " role="group" aria-label="Choose plan type">
+              <div
+                className="mx-auto mb-5 inline-flex rounded-full  bg-stone-300 p-1  "
+                role="group"
+                aria-label="Choose plan type"
+              >
                 <button
                   type="button"
                   aria-pressed="true"
-                  className="rounded-full bg-white px-5 py-2 text-sm font-medium text-stone-900 shadow-sm dark:bg-stone-700 dark:text-white"
+                  className="inset-button cursor-pointer rounded-full bg-white px-5 py-2 text-sm font-medium text-stone-900 shadow-sm dark:bg-stone-700 dark:text-white"
                 >
                   Individual
                 </button>
@@ -158,16 +166,17 @@ export default function BillingModal({
                   disabled
                   aria-disabled="true"
                   title="Team plans are coming soon"
-                  className="cursor-not-allowed rounded-full px-5 py-2 text-sm font-medium text-stone-400 dark:text-stone-500"
+                  className="no-inset cursor-not-allowed rounded-full px-5 py-2 text-sm font-medium text-stone-400 dark:text-stone-500"
                 >
-                  Team 
+                  Team
                 </button>
               </div>
               <h3 className="text-3xl font-semibold tracking-tight text-stone-900 dark:text-stone-100 sm:text-4xl">
                 Plans that grow with you
               </h3>
               <p className="mx-auto mt-3 max-w-xl text-sm text-stone-400 sm:text-base">
-                Choose the usage level that fits your sessions. Your plan takes effect after Bachs confirms checkout.
+                Choose the usage level that fits your sessions. Your plan takes
+                effect after Bachs confirms checkout.
               </p>
             </div>
 
@@ -177,7 +186,8 @@ export default function BillingModal({
                 const isCurrent = currentPlan === plan.id;
                 const isUpgrade =
                   (PLAN_RANK[plan.id] ?? 0) > (PLAN_RANK[currentPlan] ?? 0);
-                const paidPlanId: Plan | null = plan.id === "free" ? null : plan.id;
+                const paidPlanId: Plan | null =
+                  plan.id === "free" ? null : plan.id;
                 const isPaidPlan = paidPlanId !== null;
 
                 return (
@@ -194,83 +204,94 @@ export default function BillingModal({
                     <article
                       className={`relative flex min-h-130 flex-1 flex-col overflow-hidden rounded-2xl  bg-white/90  ${plan.id === "standard" ? " dark:bg-white border border-gray-100" : "dark:border dark:bg-black "}`}
                     >
-                    <div className="flex-1 p-5 sm:p-6">
-                      <div className={`mb-6 flex h-12 w-12 items-center justify-center  ${plan.id === "standard" ? "dark:text-stone-400" : "text-stone-400"}`}>
-                        <Icon size={34} strokeWidth={1.35} />
-                      </div>
-                      <div className="flex min-h-14 items-start justify-between gap-3">
-                        <div>
-                          <h4 className={`text-3xl font-semibold tracking-tight   ${plan.id === "standard" ? "dark:text-black" : ""}`}>
-                            {plan.name}
-                          </h4>
-                          <p className={`mt-1 text-sm  *:* ${plan.id === "standard" ? "dark:text-stone-500" : "text-stone-400"}`}>
-                            {plan.description}
-                          </p>
+                      <div className="flex-1 p-5 sm:p-6">
+                        <div
+                          className={`mb-6 flex h-12 w-12 items-center justify-center  ${plan.id === "standard" ? "dark:text-stone-400" : "text-stone-400"}`}
+                        >
+                          <Icon size={34} strokeWidth={1.35} />
                         </div>
-                        
-                      </div>
+                        <div className="flex min-h-14 items-start justify-between gap-3">
+                          <div>
+                            <h4
+                              className={`text-3xl font-semibold tracking-tight   ${plan.id === "standard" ? "dark:text-black" : ""}`}
+                            >
+                              {plan.name}
+                            </h4>
+                            <p
+                              className={`mt-1 text-sm  *:* ${plan.id === "standard" ? "dark:text-stone-500" : "text-stone-400"}`}
+                            >
+                              {plan.description}
+                            </p>
+                          </div>
+                        </div>
 
-                      <div className="mt-5 flex min-h-13.5 items-center gap-2">
-                        <span className={`text-3xl font-semibold tracking-tight   ${plan.id === "standard" ? "dark:text-black" : "text:stone-900"}`}>
+                        <div className="mt-5 flex min-h-13.5 items-center gap-2">
+                          <span
+                            className={`text-3xl font-semibold tracking-tight   ${plan.id === "standard" ? "dark:text-black" : "text:stone-900"}`}
+                          >
                             {plan.id === "free"
                               ? plan.price
-                            : formatPrice(paidPlanId!) ?? (pricingError ? "Price unavailable" : "Loading price…")}
-                        </span>
-                        {isPaidPlan && (
-                          <span className={`text-xs leading-4  ${plan.id === "standard" ? "dark:text-stone-500" : "text-stone-400"}`}>
-                            {pricing?.[paidPlanId!]?.currency ?? ""}
-                            {pricing?.[paidPlanId!]?.interval
-                              ? ` / ${pricing[paidPlanId!].interval}`
-                              : ""}
-                            <br />
-                            {formatBillingInterval(paidPlanId!)}
+                              : (formatPrice(paidPlanId!) ??
+                                (pricingError
+                                  ? "Price unavailable"
+                                  : "Loading price…"))}
                           </span>
+                          {isPaidPlan && (
+                            <span
+                              className={`text-xs leading-4  ${plan.id === "standard" ? "dark:text-stone-500" : "text-stone-400"}`}
+                            >
+                              {pricing?.[paidPlanId!]?.currency ?? ""}
+                              {pricing?.[paidPlanId!]?.interval
+                                ? ` / ${pricing[paidPlanId!].interval}`
+                                : ""}
+                              <br />
+                              {formatBillingInterval(paidPlanId!)}
+                            </span>
+                          )}
+                        </div>
+
+                        {isCurrent ? (
+                          <button
+                            type="button"
+                            disabled
+                            className={`mt-4 w-full cursor-pointer rounded-full  px-4 py-3 text-sm font-medium text-stone-500  dark:text-stone-200 ${plan.id === "free" ? "dark:bg-stone-300" : ""}`}
+                          >
+                            Current plan
+                          </button>
+                        ) : isUpgrade ? (
+                          <button
+                            type="button"
+                            onClick={() => choosePlan(plan.id as Plan)}
+                            disabled={loadingPlan !== null}
+                            className={`plan-action-button cursor-pointer mt-4 w-full rounded-full px-4 py-3 text-sm font-semibold transition-colors disabled:cursor-wait ${plan.id === "standard" ? "bg-black text-white hover:brightness-110" : plan.id === "pro" ? "dark:bg-[#ffffff] bg-black dark:text-black text-white" : "bg-gray-100 text-stone-950 hover:bg-gray-200"}`}
+                          >
+                            {loadingPlan === plan.id
+                              ? "Opening checkout…"
+                              : `Get ${plan.name} plan`}
+                          </button>
+                        ) : (
+                          <div className="mt-4 flex h-11.5 items-center justify-center rounded-xl border border-stone-700 bg-stone-800/60 text-sm text-stone-400">
+                            Included with your plan
+                          </div>
                         )}
                       </div>
 
-                      {isCurrent ? (
-                        <button
-                          type="button"
-                          disabled
-                          className={`mt-4 w-full cursor-pointer rounded-full  px-4 py-3 text-sm font-medium text-stone-500  dark:text-stone-200 ${plan.id === "free"? "dark:bg-stone-300" : ""}`}
-                        >
-                          Current plan
-                        </button>
-                      ) : isUpgrade ? (
-                        <button
-                          type="button"
-                          onClick={() => choosePlan(plan.id as Plan)}
-                          disabled={loadingPlan !== null}
-                          className={`mt-4 w-full rounded-full px-4 py-3 text-sm font-semibold transition-colors disabled:cursor-wait ${plan.id === "standard" ? "bg-black text-white hover:brightness-110" : plan.id === "pro" ? "dark:bg-[#ffffff] bg-black dark:text-black text-white" : "bg-gray-100 text-stone-950 hover:bg-gray-200"}`}
-                        >
-                          {loadingPlan === plan.id
-                            ? "Opening checkout…"
-                            : `Get ${plan.name} plan`}
-                        </button>
-                      ) : (
-                        <div className="mt-4 flex h-11.5 items-center justify-center rounded-xl border border-stone-700 bg-stone-800/60 text-sm text-stone-400">
-                          Included with your plan
-                        </div>
-                      )}
-                    </div>
-
-                    <div className=" px-5 py-5 sm:px-6">
-                      
-                      <ul className="space-y-2.5">
-                        {plan.features.map((feature) => (
-                          <li
-                            key={feature}
-                            className="flex items-start gap-2.5 text-sm leading-5 text-stone-400"
-                          >
-                            <Check
-                              size={16}
-                              className="mt-0.5 shrink-0 text-stone-500"
-                            />
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                      <div className=" px-5 py-5 sm:px-6">
+                        <ul className="space-y-2.5">
+                          {plan.features.map((feature) => (
+                            <li
+                              key={feature}
+                              className="flex items-start gap-2.5 text-sm leading-5 text-stone-400"
+                            >
+                              <Check
+                                size={16}
+                                className="mt-0.5 shrink-0 text-stone-500"
+                              />
+                              <span>{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </article>
                   </div>
                 );
@@ -278,17 +299,25 @@ export default function BillingModal({
             </div>
 
             {error && (
-              <p role="alert" className="mx-auto mt-5 max-w-2xl text-center text-sm text-rose-300">
+              <p
+                role="alert"
+                className="mx-auto mt-5 max-w-2xl text-center text-sm text-rose-300"
+              >
                 {error}
               </p>
             )}
             {pricingError && (
-              <p role="status" className="mx-auto mt-3 max-w-2xl text-center text-xs text-amber-200">
-                {pricingError}. Checkout remains available and will show the amount before payment.
+              <p
+                role="status"
+                className="mx-auto mt-3 max-w-2xl text-center text-xs text-amber-200"
+              >
+                {pricingError}. Checkout remains available and will show the
+                amount before payment.
               </p>
             )}
             <p className="mx-auto mt-6 max-w-3xl text-center text-xs leading-relaxed text-stone-500">
-              Prices and billing intervals sync from the configured Bachs products. Usage limits apply per usage window.
+              Prices and billing intervals sync from the configured Bachs
+              products. Usage limits apply per usage window.
             </p>
           </div>
         </div>

@@ -181,7 +181,7 @@ export default function ChatView({
           />
           <button
             onClick={sendMessage}
-            className="bg-stone-800 text-white rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-stone-900 transition-colors"
+            className="new-session-button rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-stone-900 transition-colors"
           >
             Send
           </button>

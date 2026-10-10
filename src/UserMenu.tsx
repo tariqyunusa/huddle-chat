@@ -50,7 +50,7 @@ export default function UserMenu({
   ];
 
   return (
-    <div className="relative" ref={menuRef}>
+    <div className="menu-no-inset relative" ref={menuRef}>
       <button
         onClick={() => setOpen((prev) => !prev)}
         className="flex items-center gap-2 cursor-pointer group"

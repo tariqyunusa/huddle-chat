@@ -97,7 +97,7 @@ export default function SignupForm({
             onSubmit={step === "password" ? handleSubmit : handleNext}
             className="w-full max-w-sm space-y-4 px-6"
           >
-            <h1 className="text-xl font-semibold tracking-tight text-center mb-2">
+            <h1 className="text-xl dark:text-stone-300  font-semibold tracking-tight text-center mb-2">
               Welcome to Huddle
             </h1>
             <p className="text-base text-gray-500 text-center mb-4">
@@ -184,7 +184,7 @@ export default function SignupForm({
                 <button
                   type="button"
                   onClick={handleBack}
-                  className="w-1/3 bg-stone-100 text-stone-700 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors"
+                  className="auth-button dark-auth-button w-1/3 bg-stone-100 text-stone-700 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors"
                 >
                   Back
                 </button>
@@ -192,7 +192,7 @@ export default function SignupForm({
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 bg-stone-200 text-stone-900 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+                className="auth-button dark-auth-button flex-1 bg-stone-100 text-stone-900 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
               >
                 {step === "password"
                   ? loading
@@ -207,7 +207,9 @@ export default function SignupForm({
                 <div
                   key={s}
                   className={`h-1.5 rounded-full transition-all ${
-                    s === step ? "w-6 bg-stone-800" : "w-1.5 bg-stone-300"
+                    s === step
+                      ? "w-6  dark:bg-white bg-stone-300"
+                      : "w-1.5 bg-stone-300"
                   }`}
                 />
               ))}

@@ -44,11 +44,13 @@ function App() {
     localStorage.getItem("huddle_user_id"),
   );
   const [verificationPending, setVerificationPending] = useState(
-    () => !!localStorage.getItem("huddle_user_id") && localStorage.getItem("huddle_email_verified") !== "true",
+    () =>
+      !!localStorage.getItem("huddle_user_id") &&
+      localStorage.getItem("huddle_email_verified") !== "true",
   );
 
-  const [authMode, setAuthMode] = useState<"signup" | "login" | "forgot">(
-    () => window.location.pathname === "/billing/callback" ? "login" : "signup",
+  const [authMode, setAuthMode] = useState<"signup" | "login" | "forgot">(() =>
+    window.location.pathname === "/billing/callback" ? "login" : "signup",
   );
   const resetToken = getResetTokenFromUrl();
   const [displayName] = useState<string>(
@@ -107,7 +109,9 @@ function App() {
       .catch((error: unknown) => {
         showToast(
           "error",
-          error instanceof Error ? error.message : "This invite link couldn't be opened.",
+          error instanceof Error
+            ? error.message
+            : "This invite link couldn't be opened.",
         );
         const url = new URL(window.location.href);
         url.searchParams.delete("invite");
@@ -210,7 +214,9 @@ function App() {
           <SignupForm
             onSignedUp={(id) => {
               setUserId(id);
-              setVerificationPending(localStorage.getItem("huddle_email_verified") !== "true");
+              setVerificationPending(
+                localStorage.getItem("huddle_email_verified") !== "true",
+              );
             }}
             onSwitchToLogin={() => setAuthMode("login")}
           />
@@ -226,7 +232,9 @@ function App() {
             key="login"
             onLoggedIn={(id) => {
               setUserId(id);
-              setVerificationPending(localStorage.getItem("huddle_email_verified") !== "true");
+              setVerificationPending(
+                localStorage.getItem("huddle_email_verified") !== "true",
+              );
             }}
             onSwitchToSignup={() => setAuthMode("signup")}
             onForgotPassword={() => setAuthMode("forgot")}
@@ -265,7 +273,7 @@ function App() {
           <button
             onClick={handleCreateSession}
             disabled={creating}
-            className="w-full flex items-center gap-2 rounded-lg border cursor-pointer border-stone-300 px-3 py-2 text-sm font-medium text-stone-700 hover:bg-white transition-colors disabled:opacity-50"
+            className="new-session-button w-full flex items-center gap-2 rounded-lg border cursor-pointer border-stone-300 px-3 py-2 text-sm font-medium text-stone-700 hover:bg-white transition-colors disabled:opacity-50"
           >
             <span className="text-lg leading-none">+</span>
             {creating ? "Creating…" : "New session"}
@@ -317,20 +325,23 @@ function App() {
             onLogout={handleLogout}
             onBilling={() => setBillingOpen(true)}
           />
-           <div className="flex items-center gap-1">
-    <ThemeMenu />
-    {usage && (
-      <UsageIndicator
-        tokensUsed={usage.tokensUsed}
-        tokensLimit={usage.tokensLimit}
-      />
-    )}
-  </div>
+          <div className="flex items-center gap-1">
+            <ThemeMenu />
+            {usage && (
+              <UsageIndicator
+                tokensUsed={usage.tokensUsed}
+                tokensLimit={usage.tokensLimit}
+              />
+            )}
+          </div>
         </div>
       </aside>
 
       {billingOpen && (
-        <BillingModal currentPlan={userPlan} onClose={() => setBillingOpen(false)} />
+        <BillingModal
+          currentPlan={userPlan}
+          onClose={() => setBillingOpen(false)}
+        />
       )}
 
       <div className="flex-1 flex flex-col min-w-0">
@@ -365,8 +376,8 @@ function App() {
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <h1 className="text-2xl font-semibold text-stone-800">
-                  Start a session with Talon
+                <h1 className="text-4xl font-semibold text-stone-800">
+                  Create a huddle
                 </h1>
               </div>
               <p className="text-stone-500 text-sm max-w-sm text-center">
@@ -376,7 +387,7 @@ function App() {
               <button
                 onClick={handleCreateSession}
                 disabled={creating}
-                className="bg-stone-800 text-white rounded-lg px-5 py-2.5 text-sm cursor-pointer font-medium hover:bg-stone-900 transition-colors disabled:opacity-50"
+                className="new-session-button  rounded-lg px-5 py-2.5 text-sm cursor-pointer font-medium hover:bg-stone-900 transition-colors disabled:opacity-50"
               >
                 {creating ? "Creating…" : "New session"}
               </button>
