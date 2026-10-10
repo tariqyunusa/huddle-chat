@@ -109,7 +109,7 @@ export default function SessionMenu({
       <button
         ref={buttonRef}
         onClick={toggleOpen}
-        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-stone-200 transition-opacity"
+        className="menu-no-inset opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-stone-200 transition-opacity"
       >
         <MoreHorizontal size={14} />
       </button>
@@ -120,7 +120,7 @@ export default function SessionMenu({
           <div
             ref={menuRef}
             style={{ position: "fixed", top: menuPos.top, left: menuPos.left }}
-            className="w-36 bg-white border border-stone-200 rounded-lg shadow-lg py-1 z-9999"
+            className="menu-no-inset w-36 bg-white border border-stone-200 rounded-lg shadow-lg py-1 z-9999"
           >
             <button
               onClick={(e) => {

@@ -27,7 +27,7 @@ export default function ThemeMenu() {
   const CurrentIcon = OPTIONS.find((o) => o.value === theme)?.icon ?? Monitor;
 
   return (
-    <div className="relative" ref={menuRef}>
+    <div className="menu-no-inset relative" ref={menuRef}>
       <button
         onClick={() => setOpen((prev) => !prev)}
         className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors cursor-pointer"

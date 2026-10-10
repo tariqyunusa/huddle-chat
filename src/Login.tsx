@@ -62,7 +62,7 @@ export default function LoginForm({
             onSubmit={handleSubmit}
             className="w-full max-w-sm space-y-4 px-6"
           >
-            <h1 className="text-xl font-semibold tracking-tight text-center mb-2">
+            <h1 className="text-xl dark:text-stone-300 font-semibold tracking-tight text-center mb-2">
               Welcome back
             </h1>
             <p className="text-base text-gray-500 text-center mb-4">
@@ -75,7 +75,7 @@ export default function LoginForm({
               onChange={(e) => setEmail(e.target.value)}
               autoFocus
               required
-              className="w-full bg-stone-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-stone-500"
+              className="w-full bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-2 text-sm outline-none focus:border-stone-500"
             />
             <div className="relative">
               <input
@@ -84,7 +84,7 @@ export default function LoginForm({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full bg-stone-100 rounded-xl px-4 py-2 pr-10 text-sm outline-none focus:border-stone-500"
+                className="w-full bg-stone-100 dark:bg-stone-800 rounded-xl px-4 py-2 pr-10 text-sm outline-none focus:border-stone-500"
               />
               <button
                 type="button"
@@ -107,7 +107,7 @@ export default function LoginForm({
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-stone-200 text-stone-900 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+              className="auth-button dark-auth-button w-full bg-stone-200 text-stone-900 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
             >
               {loading ? "Logging in…" : "Log in"}
             </button>
