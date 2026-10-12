@@ -91,7 +91,7 @@ export default function ForgotPasswordForm({
                 <button
                   type="button"
                   onClick={onBackToLogin}
-                  className="text-stone-800 underline underline-offset-2 no-inset"
+                  className="text-stone-800 underline underline-offset-2 no-inset cursor-pointer"
                 >
                   Back to login
                 </button>
