@@ -89,7 +89,7 @@ export default function LoginForm({
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 no-inset hover:text-stone-600"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -99,7 +99,7 @@ export default function LoginForm({
               <button
                 type="button"
                 onClick={onForgotPassword}
-                className="text-stone-800 underline underline-offset-2"
+                className="text-stone-800 underline underline-offset-2 no-inset"
               >
                 Forgot password?
               </button>
@@ -107,7 +107,7 @@ export default function LoginForm({
             <button
               type="submit"
               disabled={loading}
-              className="auth-button dark-auth-button w-full bg-stone-200 text-stone-900 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+              className="auth-button dark-auth-button w-full bg-stone-900 text-stone-100 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
             >
               {loading ? "Logging in…" : "Log in"}
             </button>
@@ -116,13 +116,26 @@ export default function LoginForm({
               <button
                 type="button"
                 onClick={onSwitchToSignup}
-                className="text-stone-800 underline underline-offset-2"
+                className="text-stone-800 underline underline-offset-2 no-inset"
               >
                 Sign up
               </button>
             </p>
           </form>
         </AuthTransition>
+         <div className="absolute bottom-4 text-xs text-stone-500 text-center">
+          <p>
+            Created by{" "}
+            <a
+              href="https://tariqyunusa.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:underline"
+            >
+              Tariq Yunusa
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );
