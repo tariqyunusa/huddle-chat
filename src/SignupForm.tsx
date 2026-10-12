@@ -152,7 +152,7 @@ export default function SignupForm({
                       <button
                         type="button"
                         onClick={() => setShowPassword((prev) => !prev)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 no-inset"
                       >
                         {showPassword ? (
                           <EyeOff size={16} />
@@ -184,7 +184,7 @@ export default function SignupForm({
                 <button
                   type="button"
                   onClick={handleBack}
-                  className="auth-button dark-auth-button w-1/3 bg-stone-100 text-stone-700 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors"
+                  className="auth-button dark-auth-button w-1/3 bg-stone-900 text-stone-100 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors"
                 >
                   Back
                 </button>
@@ -192,7 +192,7 @@ export default function SignupForm({
               <button
                 type="submit"
                 disabled={loading}
-                className="auth-button dark-auth-button flex-1 bg-stone-100 text-stone-900 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+                className="auth-button dark-auth-button flex-1 bg-stone-900 text-stone-100 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
               >
                 {step === "password"
                   ? loading
@@ -220,7 +220,7 @@ export default function SignupForm({
               <button
                 type="button"
                 onClick={onSwitchToLogin}
-                className="text-stone-800 underline underline-offset-2"
+                className="text-stone-800 underline underline-offset-2 no-inset"
               >
                 Log in
               </button>

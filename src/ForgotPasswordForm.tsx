@@ -44,7 +44,7 @@ export default function ForgotPasswordForm({
       </div>
       <div className="flex flex-col justify-center items-center w-full md:w-1/2">
         <div className="w-full max-w-sm space-y-4 px-6">
-          <h1 className="text-xl font-semibold tracking-tight text-center mb-2">
+          <h1 className="text-xl font-semibold tracking-tight text-center mb-2 dark:text-stone-300 ">
             Reset your password
           </h1>
 
@@ -83,7 +83,7 @@ export default function ForgotPasswordForm({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-stone-200 text-stone-900 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+                className="w-full bg-stone-900 auth-button dark-auth-button text-stone-100 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
               >
                 {loading ? "Sending…" : "Send reset link"}
               </button>
@@ -91,7 +91,7 @@ export default function ForgotPasswordForm({
                 <button
                   type="button"
                   onClick={onBackToLogin}
-                  className="text-stone-800 underline underline-offset-2"
+                  className="text-stone-800 underline underline-offset-2 no-inset"
                 >
                   Back to login
                 </button>
@@ -99,6 +99,19 @@ export default function ForgotPasswordForm({
             </form>
             </AuthTransition>
           )}
+        </div>
+         <div className="absolute bottom-4 text-xs text-stone-500 text-center">
+          <p>
+            Created by{" "}
+            <a
+              href="https://tariqyunusa.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:underline"
+            >
+              Tariq Yunusa
+            </a>
+          </p>
         </div>
       </div>
     </div>

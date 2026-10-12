@@ -146,14 +146,15 @@ export default function ChatView({
           </div>
           <button
             onClick={() => setInviteModalOpen(true)}
-            className="outline-none border-none cursor-pointer"
+            className="no-inset outline-none border-none cursor-pointer"
           >
             <Plus size={16} />
           </button>
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto w-full">
+      <div className="relative flex-1 overflow-y-auto w-full">
+        <div className="chat-fog-edge chat-fog-top" aria-hidden="true" />
         <div className="max-w-2xl mx-auto px-6 py-6 space-y-5">
           {messages.map((msg, i) => (
             <MessageRow key={i} msg={msg} isSelf={msg.author === displayName} />
@@ -170,8 +171,9 @@ export default function ChatView({
 
       
 
-      <div className=" px-6 py-4 ">
-        <div className="max-w-2xl mx-auto flex items-center gap-3">
+      <div className="chat-input-area px-6 py-4">
+        <div className="chat-fog-input" aria-hidden="true" />
+        <div className="relative z-10 max-w-2xl mx-auto flex items-center gap-3">
           <input
             className="flex-1 bg-stone-50 border border-stone-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-stone-500"
             value={input}
@@ -238,7 +240,7 @@ function MessageRow({ msg, isSelf }: { msg: ChatMessage; isSelf: boolean }) {
   if (isSelf) {
     return (
       <div className="flex justify-end">
-        <div className="max-w-lg bg-stone-100 rounded-2xl px-4 py-2.5 text-sm text-stone-800">
+        <div className="max-w-lg rounded-2xl bg-stone-100 px-4 py-2.5 text-sm text-stone-800 dark:bg-black dark:text-white">
           {msg.content}
         </div>
       </div>
