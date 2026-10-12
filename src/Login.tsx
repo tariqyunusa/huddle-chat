@@ -99,7 +99,7 @@ export default function LoginForm({
               <button
                 type="button"
                 onClick={onForgotPassword}
-                className="text-stone-800 underline underline-offset-2 no-inset"
+                className="text-stone-800 underline underline-offset-2 no-inset cursor-pointer"
               >
                 Forgot password?
               </button>
@@ -116,7 +116,7 @@ export default function LoginForm({
               <button
                 type="button"
                 onClick={onSwitchToSignup}
-                className="text-stone-800 underline underline-offset-2 no-inset"
+                className="text-stone-800 underline underline-offset-2 no-inset cursor-pointer"
               >
                 Sign up
               </button>
@@ -130,7 +130,7 @@ export default function LoginForm({
               href="https://tariqyunusa.xyz"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-400 hover:underline"
+              className="text-gray-400 hover:underline cursor-pointer"
             >
               Tariq Yunusa
             </a>

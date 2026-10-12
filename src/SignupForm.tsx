@@ -220,7 +220,7 @@ export default function SignupForm({
               <button
                 type="button"
                 onClick={onSwitchToLogin}
-                className="text-stone-800 underline underline-offset-2 no-inset"
+                className="text-stone-800 underline underline-offset-2 no-inset cursor-pointer"
               >
                 Log in
               </button>
