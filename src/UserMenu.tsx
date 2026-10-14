@@ -43,9 +43,8 @@ export default function UserMenu({
 
   const items = [
     { icon: Settings, label: "Settings", onClick: () => {} },
-    { icon: Globe, label: "Language", onClick: () => {} },
+    
     { icon: HelpCircle, label: "Get help", onClick: () => {} },
-    { icon: Shield, label: "Privacy policy", onClick: () => {} },
     { icon: Grid3x3, label: "Get apps & extensions", onClick: () => {} },
   ];
 
@@ -78,8 +77,11 @@ export default function UserMenu({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.97 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute bottom-full left-0 mb-2 w-56 bg-white rounded-xl border border-stone-200 shadow-lg py-1 z-50 origin-bottom-left"
+            className="absolute bottom-full left-0 mb-2 w-56 bg-white rounded-xl border pt-2 pb-2 pl-1.5 pr-1.5 border-stone-200 shadow-lg py-1 z-50 origin-bottom-left"
           >
+            <div>
+              <p>{}</p>
+            </div>
             {items.map(({ icon: Icon, label, onClick }) => (
               <button
                 key={label}
@@ -87,9 +89,9 @@ export default function UserMenu({
                   onClick();
                   setOpen(false);
                 }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-stone-600 hover:bg-stone-50 transition-colors cursor-pointer"
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-base font-normal  text-stone-600 hover:bg-stone-100 transition-colors cursor-pointer rounded-lg"
               >
-                <Icon size={15} className="text-stone-400" />
+                <Icon size={14} className="text-stone-600" />
                 {label}
               </button>
             ))}
@@ -98,18 +100,18 @@ export default function UserMenu({
                 onBilling();
                 setOpen(false);
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-stone-600 hover:bg-stone-50 transition-colors cursor-pointer"
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-base font-normal text-stone-600 hover:bg-stone-100 transition-colors cursor-pointer rounded-lg"
             >
-              <CreditCard size={15} className="text-stone-400" />
-              Plans and billing
+              <CreditCard size={15} className="text-stone-600" />
+              Upgrade Plan
             </button>
-            <div className="h-px bg-stone-100 my-1" />
+            <div className="h-px bg-stone-200 my-1" />
             <button
               onClick={() => {
                 onLogout();
                 setOpen(false);
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-base font-normal text-stone-600 hover:bg-stone-100 transition-colors cursor-pointer rounded-lg"
             >
               <LogOut size={15} />
               Log out

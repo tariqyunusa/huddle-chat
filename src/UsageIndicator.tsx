@@ -18,7 +18,7 @@ export default function UsageIndicator({ tokensUsed, tokensLimit }: UsageIndicat
       onMouseLeave={() => setHovered(false)}
     >
       <button
-        className={`p-1.5 rounded-lg transition-colors ${
+        className={`p-1.5 rounded-lg transition-colors no-inset ${
           isNearLimit ? "text-rose-500 hover:bg-rose-50" : "text-stone-400 hover:bg-stone-100"
         }`}
       >
