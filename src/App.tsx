@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import SignupForm from "./SignupForm";
 import ChatView from "./chatView";
 import {
@@ -23,6 +23,7 @@ import UserMenu from "./UserMenu";
 import ThemeMenu from "./ThemeMenu";
 import BillingModal from "./BillingModal";
 import BillingCallbackPage from "./BillingCallbackPage";
+import SettingsModal from "./SettingsModal";
 
 function getSessionFromUrl(): string | null {
   const params = new URLSearchParams(window.location.search);
@@ -50,7 +51,10 @@ function App() {
   );
 
   const [authMode, setAuthMode] = useState<"signup" | "login" | "forgot">(() =>
-    window.location.pathname === "/billing/callback" ? "login" : "signup",
+    window.location.pathname === "/billing/callback" ||
+    window.location.pathname === "/login"
+      ? "login"
+      : "signup",
   );
   const resetToken = getResetTokenFromUrl();
   const [displayName] = useState<string>(
@@ -67,6 +71,8 @@ function App() {
   const [creating, setCreating] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [billingOpen, setBillingOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsMenuFocusRef = useRef<(() => void) | null>(null);
   const [userPlan, setUserPlan] = useState<string>(
     localStorage.getItem("huddle_plan") ?? "free",
   );
@@ -74,6 +80,11 @@ function App() {
     tokensUsed: number;
     tokensLimit: number;
   } | null>(null);
+
+  const closeSettings = useCallback(() => {
+    setSettingsOpen(false);
+    window.requestAnimationFrame(() => settingsMenuFocusRef.current?.());
+  }, []);
 
   useEffect(() => {
     if (!userId) return;
@@ -299,7 +310,7 @@ function App() {
             <div
               key={s.id}
               onClick={() => openSession(s.id)}
-              className={`group flex items-center justify-between px-3 py-2 rounded-lg dark:hover:bg-stone-200 text-sm truncate transition-colors cursor-pointer ${
+              className={`group flex items-center justify-between px-3 py-2 rounded-lg dark:hover:bg-stone-500 text-sm truncate transition-colors cursor-pointer ${
                 activeSessionId === s.id
                   ? "bg-stone-200 text-stone-900"
                   : "text-stone-600 hover:bg-stone-100"
@@ -324,6 +335,8 @@ function App() {
             plan={userPlan}
             onLogout={handleLogout}
             onBilling={() => setBillingOpen(true)}
+            onSettings={() => setSettingsOpen(true)}
+            settingsFocusRef={settingsMenuFocusRef}
           />
           <div className="flex items-center gap-1">
             <ThemeMenu />
@@ -343,6 +356,8 @@ function App() {
           onClose={() => setBillingOpen(false)}
         />
       )}
+
+      {settingsOpen && <SettingsModal onClose={closeSettings} />}
 
       <div className="flex-1 flex flex-col min-w-0">
         <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-stone-200">

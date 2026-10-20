@@ -1,12 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   ChevronDown,
   Settings,
   LogOut,
-  Globe,
   HelpCircle,
-  Shield,
   Grid3x3,
   CreditCard,
 } from "lucide-react";
@@ -22,14 +20,26 @@ export default function UserMenu({
   plan,
   onLogout,
   onBilling,
+  onSettings,
+  settingsFocusRef,
 }: {
   displayName: string;
   plan: string;
   onLogout: () => void;
   onBilling: () => void;
+  onSettings: () => void;
+  settingsFocusRef: MutableRefObject<(() => void) | null>;
 }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const settingsItemRef = useRef<HTMLButtonElement>(null);
+
+  const focusSettingsItem = useCallback(() => {
+    setOpen(true);
+    window.requestAnimationFrame(() => settingsItemRef.current?.focus());
+  }, []);
+
+  settingsFocusRef.current = focusSettingsItem;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -42,7 +52,7 @@ export default function UserMenu({
   }, []);
 
   const items = [
-    { icon: Settings, label: "Settings", onClick: () => {} },
+    { icon: Settings, label: "Settings", onClick: onSettings },
     
     { icon: HelpCircle, label: "Get help", onClick: () => {} },
     { icon: Grid3x3, label: "Get apps & extensions", onClick: () => {} },
@@ -85,6 +95,7 @@ export default function UserMenu({
             {items.map(({ icon: Icon, label, onClick }) => (
               <button
                 key={label}
+                ref={label === "Settings" ? settingsItemRef : undefined}
                 onClick={() => {
                   onClick();
                   setOpen(false);

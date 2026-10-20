@@ -27,6 +27,87 @@ export type LoginResponse = {
 
 export type UserSearchResult = { id: string; display_name: string };
 
+export type MemoryDoc = {
+  id: string;
+  scope_type: "user" | "session";
+  scope_id: string;
+  kind: "semantic" | "procedural";
+  path: string;
+  description: string;
+  content: string;
+  version: number;
+  updated_at: string;
+};
+
+export class ConflictError extends Error {
+  current_version: number;
+  current_content: string;
+
+  constructor(message: string, currentVersion: number, currentContent: string) {
+    super(message);
+    this.name = "ConflictError";
+    this.current_version = currentVersion;
+    this.current_content = currentContent;
+  }
+}
+
+export type ProcedureWrite = {
+  description: string;
+  content: string;
+  if_version?: number;
+};
+
+export type SemanticMemoryEdit = {
+  content: string;
+  description?: string;
+  if_version: number;
+};
+
+async function memoryResponseError(res: Response): Promise<Error> {
+  const body = await res.json().catch(() => null);
+  const detail = body?.detail;
+  if (res.status === 409 && detail && typeof detail === "object") {
+    return new ConflictError(
+      typeof detail.detail === "string" ? detail.detail : "This memory changed elsewhere.",
+      Number(detail.current_version),
+      String(detail.current_content ?? ""),
+    );
+  }
+  const message = typeof detail === "string"
+    ? detail
+    : Array.isArray(detail)
+      ? detail.map((item) => typeof item?.msg === "string" ? item.msg : "").filter(Boolean).join(" ") || `Memory request failed (${res.status})`
+      : `Memory request failed (${res.status})`;
+  const error = new Error(message);
+  error.name = res.status === 403 || res.status === 422 ? "MemoryValidationError" : "MemoryApiError";
+  return error;
+}
+
+export async function putProcedure(path: string, payload: ProcedureWrite): Promise<MemoryDoc> {
+  const res = await apiFetch(`/memory/procedures/${path.split("/").map(encodeURIComponent).join("/")}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw await memoryResponseError(res);
+  return res.json();
+}
+
+export async function patchMemoryDoc(id: string, payload: SemanticMemoryEdit): Promise<MemoryDoc> {
+  const res = await apiFetch(`/memory/docs/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw await memoryResponseError(res);
+  return res.json();
+}
+
+export async function deleteMemoryDoc(id: string): Promise<void> {
+  const res = await apiFetch(`/memory/docs/${encodeURIComponent(id)}`, { method: "DELETE" });
+  if (!res.ok) throw await memoryResponseError(res);
+}
+
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem("huddle_token");
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -241,6 +322,21 @@ export async function inviteToSession(
     const body = await res.json().catch(() => null);
     throw new Error(body?.detail ?? "Failed to send invite");
   }
+}
+
+export async function getMemoryDocs(
+  kind?: "semantic" | "procedural",
+): Promise<MemoryDoc[]> {
+  const query = kind ? `?kind=${kind}` : "";
+  const res = await apiFetch(`/memory/docs${query}`);
+  if (!res.ok) throw new Error(`Failed to fetch memory: ${res.status}`);
+  return res.json();
+}
+
+export async function getMemoryProcedures(): Promise<MemoryDoc[]> {
+  const res = await apiFetch("/memory/procedures");
+  if (!res.ok) throw new Error(`Failed to fetch instructions: ${res.status}`);
+  return res.json();
 }
 
 export async function createSessionInviteLink(
