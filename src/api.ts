@@ -105,6 +105,7 @@ export async function patchMemoryDoc(id: string, payload: SemanticMemoryEdit): P
 
 export async function deleteMemoryDoc(id: string): Promise<void> {
   const res = await apiFetch(`/memory/docs/${encodeURIComponent(id)}`, { method: "DELETE" });
+  if (res.status === 404) return;
   if (!res.ok) throw await memoryResponseError(res);
 }
 
