@@ -8,6 +8,7 @@ import {
   putProcedure,
   type MemoryDoc,
 } from "./api";
+import { Pencil, Trash2 } from "lucide-react";
 
 type Draft = { name: string; description: string; content: string };
 type Editor = {
@@ -43,14 +44,14 @@ function groupForPath(path: string): string {
   const parts = path.split("/");
   if (parts.length === 1) return "You";
   const folder = parts[0].toLowerCase();
-  if (folder === "procedures") return "Instructions";
+  // if (folder === "procedures") return "Instructions";
   if (folder === "topics") return "Topics";
   if (folder === "project" || folder === "projects") return "Projects";
   return folder.charAt(0).toUpperCase() + folder.slice(1);
 }
 
 function groupOrder(group: string): number {
-  const fixed = ["You", "Instructions", "Topics", "Projects"];
+  const fixed = ["You", , "Topics", "Projects"];
   const index = fixed.indexOf(group);
   return index < 0 ? fixed.length : index;
 }
@@ -95,7 +96,7 @@ function EditorField({ label, children }: { label: string; children: React.React
 }
 
 function MemoryDocRow({
-  doc, mode, editor, pathCollision, reducedMotion, saved, onEdit, onCancel, onEscape, onDraft, onSave, onDeleteAsk, onDelete, onRetry, onReload,
+  doc, mode, editor, pathCollision, reducedMotion, saved, confirmDelete, deletePending, deleteError, exiting, onEdit, onCancel, onEscape, onDraft, onSave, onDeleteAsk, onCancelDelete, onDelete, onRetry, onRetryDelete, onReload,
 }: {
   doc: MemoryDoc;
   mode: "semantic" | "procedural";
@@ -103,18 +104,24 @@ function MemoryDocRow({
   pathCollision: boolean;
   reducedMotion: boolean;
   saved: boolean;
+  confirmDelete: boolean;
+  deletePending: boolean;
+  deleteError: string;
+  exiting: boolean;
   onEdit: () => void;
   onCancel: () => void;
   onEscape: () => void;
   onDraft: (patch: Partial<Draft>) => void;
   onSave: () => void;
   onDeleteAsk: () => void;
+  onCancelDelete: () => void;
   onDelete: () => void;
   onRetry: () => void;
+  onRetryDelete: () => void;
   onReload: () => void;
 }) {
   const firstField = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
-  const editButton = useRef<HTMLButtonElement>(null);
+  const cancelDeleteButton = useRef<HTMLButtonElement>(null);
   const open = Boolean(editor && !editor.closing);
   const editing = Boolean(editor && !editor.deleteConfirm);
   const changed = Boolean(editor && (mode === "semantic"
@@ -127,6 +134,7 @@ function MemoryDocRow({
   const invalid = invalidName || invalidContent || invalidDescription;
 
   useEffect(() => { if (editing) firstField.current?.focus(); }, [editing]);
+  useEffect(() => { if (confirmDelete && !deletePending) cancelDeleteButton.current?.focus(); }, [confirmDelete, deletePending]);
 
   function onKeyDown(event: React.KeyboardEvent) {
     if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); onEscape(); }
@@ -134,23 +142,42 @@ function MemoryDocRow({
   }
 
   return (
-    <article className="border-b border-stone-200 last:border-b-0 dark:border-stone-700">
-      <button
-        id={`memory-edit-${doc.id}`}
-        ref={editButton}
-        type="button"
-        aria-expanded={open}
-        aria-controls={`memory-panel-${doc.id}`}
-        onClick={onEdit}
-        className="group grid w-full cursor-pointer grid-cols-[minmax(0,220px)_minmax(0,1fr)_auto] items-center gap-3 px-2 py-4 text-left transition-colors hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 dark:hover:bg-stone-800/60 dark:focus-visible:ring-stone-500 max-sm:grid-cols-[minmax(0,120px)_minmax(0,1fr)_auto] max-sm:gap-2"
+    <article
+      className="grid overflow-hidden rounded-xl "
+      style={{ gridTemplateRows: exiting ? "0fr" : "1fr", opacity: exiting ? 0 : 1, transition: reducedMotion ? "none" : "grid-template-rows 200ms ease-out, opacity 200ms ease-out" }}
+    >
+      <div className="min-h-0 overflow-hidden">
+      <div
+        data-memory-row={doc.id}
+        onClick={() => {
+          if (exiting || deletePending) return;
+          if (confirmDelete) onCancelDelete();
+          else onEdit();
+        }}
+        className="group grid cursor-pointer grid-cols-[minmax(0,220px)_minmax(0,1fr)_auto] items-center gap-3 px-2 py-4 text-left transition-colors  max-sm:grid-cols-[minmax(0,120px)_minmax(0,1fr)_auto] max-sm:gap-2"
       >
         <span className="truncate text-sm font-medium text-stone-800 dark:text-stone-100">{humanizedTitle(doc.path)}</span>
         <span className="truncate text-sm text-stone-500 dark:text-stone-400">{doc.description}</span>
-        <span className="flex items-center justify-end gap-3 whitespace-nowrap text-xs text-stone-400 dark:text-stone-500">
-          <span>{relativeTime(doc.updated_at)}</span>
-          <span className={`pointer-events-none rounded-lg px-2 py-1 text-xs font-medium text-stone-600 transition-opacity dark:text-stone-300 ${saved ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 [@media(hover:none)]:opacity-100"}`}>{saved ? "Saved" : "Edit"}</span>
-        </span>
-      </button>
+        <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+          <span className="text-xs text-stone-400 dark:text-stone-500">{relativeTime(doc.updated_at)}</span>
+          {confirmDelete ? <div className="flex items-center gap-1 text-sm" onClick={(event) => event.stopPropagation()}>
+            <span className="mr-1 text-stone-600 dark:text-stone-300">Delete this?</span>
+            <button ref={cancelDeleteButton} type="button" disabled={deletePending} onClick={onCancelDelete} className="rounded-lg px-2 py-1 text-stone-600 hover:bg-stone-100 disabled:opacity-50 dark:text-stone-300 dark:hover:bg-stone-800">Cancel</button>
+            <button type="button" disabled={deletePending} onClick={onDelete} className="rounded-lg px-2 py-1 font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50 dark:text-rose-300 dark:hover:bg-rose-950">
+              {deletePending ? <span aria-label="Deleting" className="inline-block size-4 animate-spin rounded-full border-2 border-current border-r-transparent align-middle" /> : "Delete"}
+            </button>
+          </div> : <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
+            <button id={`memory-edit-${doc.id}`} type="button" disabled={deletePending || exiting} aria-label={`Edit ${humanizedTitle(doc.path)}`} aria-expanded={open} aria-controls={`memory-panel-${doc.id}`} onClick={onEdit} className="flex items-center cursor-pointer gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-stone-600 opacity-0 no-inset transition-opacity hover:bg-stone-100  group-hover:opacity-100  focus-visible:opacity-100 disabled:cursor-not-allowed [@media(hover:none)]:opacity-100 dark:text-stone-300 dark:hover:bg-gray-700">
+              <Pencil size={14} aria-hidden="true" />
+            </button>
+            <button type="button" aria-label={`Delete ${humanizedTitle(doc.path)}`} disabled={deletePending || exiting} onClick={onDeleteAsk} className="rounded-lg p-1.5 text-stone-500 opacity-0 transition-opacity no-inset cursor-pointer hover:bg-rose-50 hover:text-rose-700 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 disabled:cursor-not-allowed [@media(hover:none)]:opacity-100 dark:text-stone-400 dark:hover:bg-rose-950 dark:hover:text-rose-300">
+              <Trash2 size={15} aria-hidden="true" />
+            </button>
+          </div>}
+        </div>
+      </div>
+      {deleteError && !open && <div className="px-3 pb-3" role="alert"><FieldError>{deleteError}</FieldError><button type="button" onClick={onRetryDelete} disabled={deletePending} className="mt-1 text-sm font-medium text-stone-600 underline disabled:opacity-50 dark:text-stone-300">Retry</button></div>}
+      {saved && <p role="status" className="px-3 pb-2 text-sm font-medium text-emerald-700 dark:text-emerald-300">Saved</p>}
       <div
         id={`memory-panel-${doc.id}`}
         aria-hidden={!open}
@@ -175,7 +202,7 @@ function MemoryDocRow({
           </> : <>
             <p className="text-sm font-medium text-stone-800 dark:text-stone-100">{doc.path}</p>
             <EditorField label="Facts, one per line">
-              <textarea ref={firstField as React.RefObject<HTMLTextAreaElement>} value={editor.draft.content} onChange={(event) => onDraft({ content: event.target.value })} rows={5} className="mt-1 block w-full resize-y rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-800 outline-none focus:border-stone-500 dark:border-stone-600 dark:bg-stone-950 dark:text-stone-100" />
+              <textarea ref={firstField as React.RefObject<HTMLTextAreaElement>} value={editor.draft.content} onChange={(event) => onDraft({ content: event.target.value })} rows={5} className="mt-1 block w-full resize-y rounded-lg  bg-gray-50 px-3 py-2 text-sm leading-6 text-stone-800 outline-none  dark:bg-gray-300 dark:text-stone-100" />
             </EditorField>
             <p className="text-xs text-stone-500 dark:text-stone-400">Talon may add to this over time.</p>
             {!editor.draft.content.trim() && <button type="button" onClick={onDeleteAsk} className="text-left text-sm font-medium text-red-700 underline dark:text-red-300">Delete this document instead?</button>}
@@ -191,34 +218,36 @@ function MemoryDocRow({
           </div>}
           {editor.error && <div><FieldError>{editor.error}</FieldError>{editor.retryable && <button type="button" onClick={onRetry} className="mt-2 text-sm font-medium text-stone-600 underline dark:text-stone-300">Retry</button>}</div>}
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" disabled={!changed || invalid || editor.busy} onClick={onSave} className="rounded-lg bg-stone-800 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-45 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white">{editor.busy ? "Saving…" : "Save"}</button>
-            <button type="button" disabled={editor.busy} onClick={onCancel} className="rounded-lg px-3 py-2 text-sm text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800">Cancel</button>
+            <button type="button" disabled={!changed || invalid || editor.busy} onClick={onSave} className="rounded-lg bg-stone-800 px-3 py-2 text-sm font-medium text-white dark:bg-red-700 transition-colors hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-45  dark:text-stone-900 dark:hover:bg-white">{editor.busy ? "Saving…" : "Save"}</button>
+            <button type="button" disabled={editor.busy} onClick={onCancel} className="rounded-lg px-3 py-2 text-sm  text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-100">Cancel</button>
             {editor.deleteConfirm ? <>
               <span className="text-sm text-stone-600 dark:text-stone-300">Delete this {mode === "semantic" ? "document" : "instruction"}?</span>
-              <button type="button" disabled={editor.busy} onClick={onDelete} className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950">{editor.busy ? "Deleting…" : "Confirm delete"}</button>
-              <button type="button" onClick={onCancel} className="rounded-lg px-3 py-2 text-sm text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800">Keep</button>
+              <button type="button" disabled={deletePending} onClick={onDelete} className="rounded-lg px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50 dark:text-rose-300 dark:hover:bg-rose-950">{deletePending ? <span aria-label="Deleting" className="inline-block size-4 animate-spin rounded-full border-2 border-current border-r-transparent align-middle" /> : "Confirm delete"}</button>
+              <button type="button" disabled={deletePending} onClick={onCancel} className="rounded-lg px-3 py-2 text-sm text-stone-600 hover:bg-stone-100 disabled:opacity-50 dark:text-stone-300 dark:hover:bg-stone-800">Keep</button>
             </> : <button type="button" disabled={editor.busy} onClick={onDeleteAsk} className="ml-auto rounded-lg px-3 py-2 text-sm text-red-700 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950">Delete {mode === "semantic" ? "document" : "instruction"}</button>}
           </div>
         </div>
         </div> : editor?.deleteConfirm && <div className="space-y-4 px-3 pb-5 pt-2 sm:px-5" role="alert">
           <p className="text-sm text-stone-600 dark:text-stone-300">Delete this {mode === "semantic" ? "document" : "instruction"}?</p>
           {editor.error && <><FieldError>{editor.error}</FieldError>{editor.retryable && <button type="button" onClick={onRetry} className="mt-2 text-sm font-medium text-stone-600 underline dark:text-stone-300">Retry</button>}</>}
-          <button type="button" disabled={editor.busy} onClick={onDelete} className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:text-red-300 dark:hover:bg-red-950">{editor.busy ? "Deleting…" : "Confirm delete"}</button>
-          <button type="button" onClick={onCancel} className="rounded-lg px-2.5 py-1.5 text-sm text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800">Cancel</button>
+          <button type="button" disabled={deletePending} onClick={onDelete} className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50 dark:text-rose-300 dark:hover:bg-rose-950">{deletePending ? <span aria-label="Deleting" className="inline-block size-4 animate-spin rounded-full border-2 border-current border-r-transparent align-middle" /> : "Delete"}</button>
+          <button type="button" disabled={deletePending} onClick={onCancel} className="rounded-lg px-2.5 py-1.5 text-sm text-stone-600 hover:bg-stone-100 disabled:opacity-50 dark:text-stone-300 dark:hover:bg-stone-800">Cancel</button>
         </div>}
           {saved && <p role="status" className="px-3 pb-3 text-sm font-medium text-emerald-700 dark:text-emerald-300">Saved</p>}
         </div>
+      </div>
       </div>
     </article>
   );
 }
 
-function MemoryList({ docs, editor, savedId, reducedMotion, onStart, onCancel, onEscape, onDraft, onSave, onDeleteAsk, onDelete, onRetry, onReload, creating, onCreate, onCreateCancel, onCreateDraft, maxed }: {
+function MemoryList({ docs, editor, savedId, reducedMotion, confirmDeleteId, deletePendingId, deleteErrors, exitingIds, onStart, onCancel, onEscape, onDraft, onSave, onDeleteAsk, onCancelDelete, onDelete, onRetry, onRetryDelete, onReload }: {
   docs: MemoryDoc[]; editor: Editor | null; savedId: string | null; reducedMotion: boolean;
+  confirmDeleteId: string | null; deletePendingId: string | null; deleteErrors: Record<string, string>; exitingIds: string[];
   onStart: (doc: MemoryDoc) => void; onCancel: () => void; onEscape: () => void; onDraft: (patch: Partial<Draft>) => void;
-  onSave: () => void; onDeleteAsk: (doc: MemoryDoc) => void; onDelete: () => void; onRetry: () => void; onReload: () => void;
-  creating: boolean; onCreate: () => void; onCreateCancel: () => void; onCreateDraft: (draft: Draft) => Promise<void>; maxed: boolean;
+  onSave: () => void; onDeleteAsk: (doc: MemoryDoc) => void; onCancelDelete: () => void; onDelete: (doc: MemoryDoc) => void; onRetry: () => void; onRetryDelete: (doc: MemoryDoc) => void; onReload: () => void;
 }) {
+  /* Disabled for now; re-enable when instruction creation returns.
   const [createDraft, setCreateDraft] = useState<Draft>({ name: "", description: "", content: "" });
   const [createError, setCreateError] = useState("");
   const [createRetryable, setCreateRetryable] = useState(false);
@@ -249,23 +278,27 @@ function MemoryList({ docs, editor, savedId, reducedMotion, onStart, onCancel, o
     catch (err) { setCreateError(err instanceof Error ? err.message : "Couldn't save instruction."); setCreateRetryable(isNetworkError(err)); }
     finally { setCreateBusy(false); }
   }
+  */
 
-  const groupNames = [...docs.map((doc) => groupForPath(doc.path)), "Instructions"];
+  const groupNames = [...docs.map((doc) => groupForPath(doc.path))];
   const groups = Array.from(new Set(groupNames)).sort((a, b) => groupOrder(a) - groupOrder(b) || a.localeCompare(b));
 
   function renderRows(rows: MemoryDoc[]) {
-    return <div>{rows.map((doc) => <MemoryDocRow key={doc.id} doc={doc} mode={doc.kind} editor={editor?.id === doc.id ? editor : null} pathCollision={Boolean(editor && editor.id === doc.id && docs.some((item) => item.id !== doc.id && item.path === slugFor(editor.draft.name)))} reducedMotion={reducedMotion} saved={savedId === doc.id} onEdit={() => onStart(doc)} onCancel={onCancel} onEscape={onEscape} onDraft={onDraft} onSave={onSave} onDeleteAsk={() => onDeleteAsk(doc)} onDelete={onDelete} onRetry={onRetry} onReload={onReload} />)}</div>;
+    return <div>{rows.map((doc) => <MemoryDocRow key={doc.id} doc={doc} mode={doc.kind} editor={editor?.id === doc.id ? editor : null} pathCollision={Boolean(editor && editor.id === doc.id && docs.some((item) => item.id !== doc.id && item.path === slugFor(editor.draft.name)))} reducedMotion={reducedMotion} saved={savedId === doc.id} confirmDelete={confirmDeleteId === doc.id} deletePending={deletePendingId === doc.id} deleteError={deleteErrors[doc.id] ?? ""} exiting={exitingIds.includes(doc.id)} onEdit={() => onStart(doc)} onCancel={onCancel} onEscape={onEscape} onDraft={onDraft} onSave={onSave} onDeleteAsk={() => onDeleteAsk(doc)} onCancelDelete={onCancelDelete} onDelete={() => onDelete(doc)} onRetry={onRetry} onRetryDelete={() => onRetryDelete(doc)} onReload={onReload} />)}</div>;
   }
 
   return <div className="space-y-6">
-    {docs.length === 0 && !creating ? <p className="rounded-xl border border-stone-200 bg-stone-50 px-5 py-4 text-sm text-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-400">Nothing saved yet. Talon saves facts you state and instructions you add.</p> : null}
+    {docs.length === 0 ? <p className="rounded-xl border border-stone-200 bg-stone-50 px-5 py-4 text-sm text-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-400">Nothing saved yet. Talon saves facts you state and instructions you add.</p> : null}
     {groups.map((group) => {
       const rows = docs.filter((doc) => groupForPath(doc.path) === group);
       return <section key={group}>
     <div className="flex items-center justify-between gap-3 border-b border-stone-200 pb-3 dark:border-stone-700">
       <h3 className="text-base font-semibold text-stone-800 dark:text-stone-100">{group}</h3>
+      {/* Disabled for now; re-enable when instruction creation returns.
       {group === "Instructions" && <button type="button" onClick={beginCreate} disabled={maxed || Boolean(editor) || creating} title={maxed ? "You can have up to 5 instructions." : undefined} className="rounded-xl bg-stone-800 px-3 py-2 text-sm font-medium cursor-pointer no-inset text-white hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-45 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white">New instruction</button>}
+      */}
     </div>
+    {/* Disabled for now; re-enable when instruction creation returns.
     {creating && group === "Instructions" && <div className="space-y-4 border-b border-stone-200 py-5 dark:border-stone-700" onKeyDown={handleCreateKeyDown}>
       <EditorField label="Name"><input autoFocus value={createDraft.name} onChange={(event) => setCreateDraft({ ...createDraft, name: event.target.value })} maxLength={80} className="mt-1 block w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-500 dark:border-stone-600 dark:bg-stone-950 dark:text-stone-100" /></EditorField>
       <p className="-mt-3 text-xs text-stone-500 dark:text-stone-400">Path preview: <code>{path}</code> ({path.length}/80)</p>
@@ -277,12 +310,15 @@ function MemoryList({ docs, editor, savedId, reducedMotion, onStart, onCancel, o
       {createError && <><FieldError>{createError}</FieldError>{createRetryable && <button type="button" onClick={() => void submitCreate()} className="text-sm font-medium text-stone-600 underline dark:text-stone-300">Retry</button>}</>}
       <div className="flex gap-2"><button type="button" disabled={createInvalid || createBusy} onClick={() => void submitCreate()} className="rounded-lg bg-stone-800 px-3 py-2 text-sm font-medium text-white disabled:opacity-45 dark:bg-stone-100 dark:text-stone-900">{createBusy ? "Saving…" : "Save"}</button><button type="button" onClick={onCreateCancel} className="rounded-lg px-3 py-2 text-sm text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800">Cancel</button></div>
     </div>}
+    */}
     {renderRows(rows)}
       </section>;
     })}
+    {/* Disabled for now; re-enable when instruction creation returns.
     {creating && !groups.includes("Instructions") && <section>
       <div className="flex justify-end border-b border-stone-200 pb-3 dark:border-stone-700"><button type="button" onClick={onCreateCancel} className="text-sm text-stone-600 dark:text-stone-300">Cancel</button></div>
     </section>}
+    */}
   </div>;
 }
 
@@ -296,8 +332,13 @@ export default function MemorySettings({ onDirtyChange }: { onDirtyChange?: (dir
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editor, setEditor] = useState<Editor | null>(null);
-  const [creating, setCreating] = useState(false);
+  // Disabled for now; re-enable when instruction creation returns.
+  // const [creating, setCreating] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
+  const [deleteErrors, setDeleteErrors] = useState<Record<string, string>>({});
+  const [exitingIds, setExitingIds] = useState<string[]>([]);
   const reducedMotion = useReducedMotion();
   const retryRef = useRef<(() => Promise<void>) | null>(null);
   const closeTimer = useRef<number | null>(null);
@@ -317,12 +358,13 @@ export default function MemorySettings({ onDirtyChange }: { onDirtyChange?: (dir
     return () => window.clearTimeout(timer);
   }, [loadMemory]);
 
-  const dirty = Boolean(creating || hasUnsavedDraft(editor));
+  const dirty = Boolean(hasUnsavedDraft(editor));
   useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
 
   const closeEditor = useCallback((after?: () => void) => {
     const current = editor;
-    setCreating(false);
+    // Disabled for now; re-enable when instruction creation returns.
+    // setCreating(false);
     retryRef.current = null;
     if (!current || reducedMotion) {
       setEditor(null);
@@ -341,19 +383,40 @@ export default function MemorySettings({ onDirtyChange }: { onDirtyChange?: (dir
 
   useEffect(() => () => { if (closeTimer.current !== null) window.clearTimeout(closeTimer.current); }, []);
 
+  useEffect(() => {
+    if (!confirmDeleteId) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && deletePendingId !== confirmDeleteId) {
+        event.preventDefault();
+        setConfirmDeleteId(null);
+      }
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      if (deletePendingId === confirmDeleteId) return;
+      const target = event.target;
+      if (target instanceof Element && !target.closest(`[data-memory-row="${confirmDeleteId}"]`)) setConfirmDeleteId(null);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [confirmDeleteId, deletePendingId]);
+
   const cancel = useCallback(() => closeEditor(), [closeEditor]);
   const startEdit = useCallback((doc: MemoryDoc) => {
     const open = () => setEditor({ id: doc.id, base: doc, draft: { name: doc.path.replace(/^procedures\//, "").replace(/\.md$/, ""), description: doc.description, content: doc.kind === "semantic" ? factsFromContent(doc.content) : doc.content }, busy: false, error: "", retryable: false, conflict: false, deleteConfirm: false, closing: false });
+    setConfirmDeleteId(null);
     if (editor?.id === doc.id) {
       if (hasUnsavedDraft(editor) && !window.confirm("Discard changes?")) return;
       closeEditor();
       return;
     }
-    if (creating && !window.confirm("Discard changes?")) return;
     if (hasUnsavedDraft(editor) && !window.confirm("Discard changes?")) return;
     if (editor) closeEditor(open);
-    else { setCreating(false); open(); }
-  }, [editor, creating, closeEditor]);
+    else open();
+  }, [editor, closeEditor]);
   const escapeEditor = useCallback(() => {
     if (hasUnsavedDraft(editor) && !window.confirm("Discard changes?")) return;
     closeEditor();
@@ -388,26 +451,38 @@ export default function MemorySettings({ onDirtyChange }: { onDirtyChange?: (dir
     }
   }, [editor, closeEditor]);
 
-  const remove = useCallback(async () => {
-    if (!editor?.base) return;
-    const current = editor;
-    setEditor({ ...current, busy: true, error: "", retryable: false });
-    const action = async () => {
-      await deleteMemoryDoc(current.base!.id);
-      setSemanticDocs((docs) => docs.filter((doc) => doc.id !== current.base!.id));
-      setProceduralDocs((docs) => docs.filter((doc) => doc.id !== current.base!.id));
-      setEditor(null); retryRef.current = null;
-    };
-    retryRef.current = action;
-    try { await action(); }
-    catch (err) { setEditor({ ...current, busy: false, error: err instanceof Error ? err.message : "Couldn't delete this document.", retryable: isNetworkError(err) }); }
-  }, [editor]);
+  const deleteDocument = useCallback(async (doc: MemoryDoc) => {
+    if (editor?.id !== doc.id) setConfirmDeleteId(doc.id);
+    setDeletePendingId(doc.id);
+    setDeleteErrors((current) => { const next = { ...current }; delete next[doc.id]; return next; });
+    try {
+      await deleteMemoryDoc(doc.id);
+      setConfirmDeleteId(null);
+      setExitingIds((current) => current.includes(doc.id) ? current : [...current, doc.id]);
+      const finishDelete = () => {
+        setSemanticDocs((docs) => docs.filter((item) => item.id !== doc.id));
+        setProceduralDocs((docs) => docs.filter((item) => item.id !== doc.id));
+        setExitingIds((current) => current.filter((id) => id !== doc.id));
+        setDeletePendingId(null);
+        setEditor((current) => current?.id === doc.id ? null : current);
+      };
+      if (reducedMotion) finishDelete();
+      else window.setTimeout(finishDelete, 205);
+    } catch (deleteError) {
+      setDeletePendingId(null);
+      setConfirmDeleteId(null);
+      setDeleteErrors((current) => ({ ...current, [doc.id]: deleteError instanceof Error ? deleteError.message : "Couldn't delete this document." }));
+      if (editor?.id === doc.id) closeEditor();
+    }
+  }, [reducedMotion, editor, closeEditor]);
 
+  /* Disabled for now; re-enable when instruction creation returns.
   async function createProcedure(draft: Draft) {
     const created = await putProcedure(slugFor(draft.name), { description: draft.description, content: draft.content });
     setProceduralDocs((docs) => [...docs, created]); setCreating(false); setSavedId(created.id);
     window.setTimeout(() => setSavedId((id) => id === created.id ? null : id), 2200);
   }
+  */
 
   async function reloadConflict() {
     const id = editor?.id;
@@ -428,8 +503,14 @@ export default function MemorySettings({ onDirtyChange }: { onDirtyChange?: (dir
   }
 
   function deleteAsk(doc: MemoryDoc) {
-    if (!editor) setEditor({ id: doc.id, base: doc, draft: { name: "", description: "", content: "" }, busy: false, error: "", retryable: false, conflict: false, deleteConfirm: true, closing: false });
+    setDeleteErrors((current) => { const next = { ...current }; delete next[doc.id]; return next; });
+    if (!editor) setConfirmDeleteId(doc.id);
     else if (editor.id === doc.id) setEditor({ ...editor, deleteConfirm: true, error: "" });
+  }
+
+  function cancelDeleteConfirm() {
+    if (deletePendingId) return;
+    setConfirmDeleteId(null);
   }
 
   function retryRequest() {
@@ -450,15 +531,22 @@ export default function MemorySettings({ onDirtyChange }: { onDirtyChange?: (dir
       onEscape={escapeEditor}
       onDraft={updateDraft}
       onSave={() => void save()}
+      confirmDeleteId={confirmDeleteId}
+      deletePendingId={deletePendingId}
+      deleteErrors={deleteErrors}
+      exitingIds={exitingIds}
       onDeleteAsk={deleteAsk}
-      onDelete={() => void remove()}
+      onCancelDelete={cancelDeleteConfirm}
+      onDelete={(doc) => void deleteDocument(doc)}
       onRetry={retryRequest}
+      onRetryDelete={(doc) => void deleteDocument(doc)}
       onReload={() => void reloadConflict()}
-      creating={creating}
-      onCreate={() => { if (!editor && proceduralDocs.length < 5) setCreating(true); }}
-      onCreateCancel={cancel}
-      onCreateDraft={createProcedure}
-      maxed={proceduralDocs.length >= 5 || Boolean(editor)}
     />}
+    {/* Disabled for now; re-enable when instruction creation returns.
+    onCreate={() => { if (!editor && proceduralDocs.length < 5) setCreating(true); }}
+    onCreateCancel={cancel}
+    onCreateDraft={createProcedure}
+    maxed={proceduralDocs.length >= 5 || Boolean(editor)}
+    */}
   </div>;
 }

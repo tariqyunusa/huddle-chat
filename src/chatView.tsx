@@ -175,7 +175,7 @@ export default function ChatView({
         <div className="chat-fog-input" aria-hidden="true" />
         <div className="relative z-10 max-w-2xl mx-auto flex items-center gap-3">
           <input
-            className="flex-1 bg-stone-50 border border-stone-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-stone-500"
+            className="flex-1 bg-stone-50 border border-stone-300 rounded-xl px-4 py-2.5 text-base outline-none"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
@@ -183,7 +183,7 @@ export default function ChatView({
           />
           <button
             onClick={sendMessage}
-            className="new-session-button rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-stone-900 transition-colors"
+            className="new-session-button cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-stone-900 transition-colors"
           >
             Send
           </button>

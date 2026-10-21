@@ -127,7 +127,7 @@ export default function InviteModal({ sessionId, onClose }: InviteModalProps) {
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-stone-400 hover:text-stone-600"
+          className="absolute right-4 no-inset cursor-pointer top-4 text-stone-400 hover:text-stone-600"
         >
           <CloseIcon size={18} />
         </button>
@@ -149,12 +149,12 @@ export default function InviteModal({ sessionId, onClose }: InviteModalProps) {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="someone@example.com"
               autoFocus
-              className="flex-1 bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-stone-400"
+              className="flex-1 bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-base outline-none "
             />
             <button
               onClick={sendEmailInvite}
               disabled={sending || !email.trim()}
-              className="bg-stone-800 text-white rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
+              className=" text-white rounded-lg px-4 py-2 bg-[#006FFF] cursor-pointer text-base font-medium disabled:opacity-50"
             >
               Invite
             </button>
@@ -169,7 +169,7 @@ export default function InviteModal({ sessionId, onClose }: InviteModalProps) {
             value={nameQuery}
             onChange={(e) => handleNameSearch(e.target.value)}
             placeholder="Search by name…"
-            className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-stone-400"
+            className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-base outline-none focus:border-stone-400"
           />
           {results.length > 0 && (
             <div className="border border-stone-100 rounded-lg overflow-hidden">
@@ -194,7 +194,7 @@ export default function InviteModal({ sessionId, onClose }: InviteModalProps) {
             <button
               onClick={copyLink}
               disabled={!inviteUrl || creatingInviteLink}
-              className="flex flex-col items-center gap-1 text-xs text-stone-600 cursor-pointer disabled:opacity-50"
+              className="flex flex-col items-center no-inset gap-1 text-xs text-stone-600 cursor-pointer disabled:opacity-50"
             >
               <span className="w-10 h-10 rounded-full bg-stone-100 flex items-center cursor-pointer justify-center">
                 {copied ? <Check size={16} /> : <Link2 size={16} />}
@@ -204,7 +204,7 @@ export default function InviteModal({ sessionId, onClose }: InviteModalProps) {
             <button
               onClick={shareViaWhatsApp}
               disabled={!inviteUrl || creatingInviteLink}
-              className="flex flex-col items-center gap-1 text-xs text-stone-600 cursor-pointer disabled:opacity-50"
+              className="flex flex-col items-center no-inset gap-1 text-xs text-stone-600 cursor-pointer disabled:opacity-50"
             >
               <span className="w-10 h-10 rounded-full bg-stone-100 flex items-center cursor-pointer justify-center">
                 <WhatsappIcon size={16} />
@@ -214,7 +214,7 @@ export default function InviteModal({ sessionId, onClose }: InviteModalProps) {
             <button
               onClick={shareViaX}
               disabled={!inviteUrl || creatingInviteLink}
-              className="flex flex-col items-center gap-1 text-xs text-stone-600 cursor-pointer disabled:opacity-50"
+              className="flex flex-col no-inset items-center gap-1 text-xs text-stone-600 cursor-pointer disabled:opacity-50"
             >
               <span className="w-10 h-10 rounded-full bg-stone-100 flex items-center cursor-pointer justify-center font-semibold text-sm">
                 <NewTwitterIcon size={16} />
@@ -224,7 +224,7 @@ export default function InviteModal({ sessionId, onClose }: InviteModalProps) {
             <button
               onClick={shareViaSnapchat}
               disabled={!inviteUrl || creatingInviteLink}
-              className="flex flex-col items-center gap-1 cursor-pointer text-xs text-stone-600 disabled:opacity-50"
+              className="flex flex-col no-inset items-center gap-1 cursor-pointer text-xs text-stone-600 disabled:opacity-50"
             >
               <span className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center">
                 <SnapchatIcon size={16} />

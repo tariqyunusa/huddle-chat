@@ -284,10 +284,10 @@ function App() {
           <button
             onClick={handleCreateSession}
             disabled={creating}
-            className="new-session-button w-full flex items-center gap-2 rounded-lg border cursor-pointer border-stone-300 px-3 py-2 text-sm font-medium text-stone-700 hover:bg-white transition-colors disabled:opacity-50"
+            className="no-inset w-full flex items-center gap-2 rounded-lg  cursor-pointer  px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-200 transition-colors disabled:opacity-50"
           >
-            <span className="text-lg leading-none">+</span>
-            {creating ? "Creating…" : "New session"}
+            <div className="text-lg leading-none bg-stone-100 rounded-xl px-1 py-0.5 flex justify-center items-center">+</div>
+            {creating ? "Creating…" : "New"}
           </button>
         </div>
         {/* <div className="px-3 py-3 flex items-center gap-2 md:hidden">
@@ -313,7 +313,7 @@ function App() {
               className={`group flex items-center justify-between px-3 py-2 rounded-lg dark:hover:bg-stone-500 text-sm truncate transition-colors cursor-pointer ${
                 activeSessionId === s.id
                   ? "bg-stone-200 text-stone-900"
-                  : "text-stone-600 hover:bg-stone-100"
+                  : "text-stone-600 hover:bg-stone-200"
               }`}
             >
               <span className="truncate flex-1 font-medium text-[14px]">
@@ -386,16 +386,16 @@ function App() {
               <div className="flex items-center ">
                 <div className="w-24 h-24 ">
                   <img
-                    src="/icon_black.svg"
+                    src="/huddle-large.svg"
                     alt="black logo"
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <h1 className="text-4xl font-semibold text-stone-800">
+                <h1 className="text-4xl font-semibold text-stone-800 font-lora">
                   Create a huddle
                 </h1>
               </div>
-              <p className="text-stone-500 text-sm max-w-sm text-center">
+              <p className="text-stone-500 max-w-sm text-center text-base ">
                 Create a session, invite others, and reason through anything
                 together.
               </p>
