@@ -61,6 +61,8 @@ export default function ChatView({
   const [input, setInput] = useState("");
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [thinking, setThinking] = useState(false);
+  const [statusLabel, setStatusLabel] = useState<string | null>(null);
+  const [memorySaving, setMemorySaving] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -68,6 +70,10 @@ export default function ChatView({
 
   useEffect(() => {
     setMessages([]);
+    setThinking(false);
+    setStatusLabel(null);
+    setMemorySaving(false);
+
     const token = localStorage.getItem("huddle_token");
     const isLocal =
       BACKEND_HOST.includes("localhost") || BACKEND_HOST.includes("127.0.0.1");
@@ -83,6 +89,21 @@ export default function ChatView({
         setThinking(true);
         return;
       }
+      if (data.type === "talon_status") {
+        if (data.phase === "idle") {
+          setThinking(false);
+          setStatusLabel(null);
+        } else {
+          setThinking(true);
+          setStatusLabel(data.label);
+        }
+        return;
+      }
+      if (data.type === "memory_saving") {
+        setMemorySaving(data.active);
+        return;
+      }
+
       if (data.type === "session_title") {
         onTitleUpdate?.(sessionId, data.title);
         return;
@@ -94,10 +115,12 @@ export default function ChatView({
       }
       if (data.type === "error") {
         setThinking(false);
+        setStatusLabel(null);
         showToast("error", data.content);
         return;
       }
       setThinking(false);
+      setStatusLabel(null);
       setMessages((prev) => [...prev, data]);
     };
     ws.onerror = () => {
@@ -162,14 +185,19 @@ export default function ChatView({
           {thinking && (
             <div className="flex items-center gap-2 text-sm text-stone-400">
               <span className="font-medium text-stone-500">Talon</span>
-              <span className="italic">is thinking…</span>
+              <span className="italic">
+                {statusLabel ? `${statusLabel.toLowerCase()}…` : "is thinking…"}
+              </span>
+            </div>
+          )}
+          {memorySaving && !thinking && (
+            <div className="text-xs italic text-stone-400">
+              Saving to memory…
             </div>
           )}
           <div ref={bottomRef} />
         </div>
       </div>
-
-      
 
       <div className="chat-input-area px-6 py-4">
         <div className="chat-fog-input" aria-hidden="true" />
