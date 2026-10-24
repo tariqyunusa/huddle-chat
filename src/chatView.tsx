@@ -66,6 +66,30 @@ export default function ChatView({
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const MIN_STATUS_MS = 800;
+  const statusShownAt = useRef(0);
+  const statusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function showStatus(label: string) {
+    if (statusTimer.current) clearTimeout(statusTimer.current);
+    const wait = Math.max(
+      0,
+      MIN_STATUS_MS - (Date.now() - statusShownAt.current),
+    );
+    statusTimer.current = setTimeout(() => {
+      setThinking(true);
+      setStatusLabel(label);
+      statusShownAt.current = Date.now();
+    }, wait);
+  }
+
+  function clearStatus() {
+    if (statusTimer.current) clearTimeout(statusTimer.current);
+    setThinking(false);
+    setStatusLabel(null);
+    statusShownAt.current = 0;
+  }
+
   const showToast = useToast();
 
   useEffect(() => {
@@ -85,18 +109,14 @@ export default function ChatView({
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
+
       if (data.type === "thinking") {
         setThinking(true);
         return;
       }
       if (data.type === "talon_status") {
-        if (data.phase === "idle") {
-          setThinking(false);
-          setStatusLabel(null);
-        } else {
-          setThinking(true);
-          setStatusLabel(data.label);
-        }
+        if (data.phase === "idle") clearStatus();
+        else showStatus(data.label);
         return;
       }
       if (data.type === "memory_saving") {
