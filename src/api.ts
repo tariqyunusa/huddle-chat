@@ -27,6 +27,20 @@ export type LoginResponse = {
 
 export type UserSearchResult = { id: string; display_name: string };
 
+export type GithubInstallation = {
+  installation_id: number; account: string; account_type: string; selection: string;
+}
+
+export type GithubRepo = {
+  id: number; 
+  full_name: string;
+  private: boolean;
+  default_branch: string;
+  installation_id: number;
+  account: string;
+
+}
+
 export type MemoryDoc = {
   id: string;
   scope_type: "user" | "session";
@@ -440,5 +454,28 @@ export async function resendVerification(): Promise<{ message: string }> {
   if (!res.ok) throw new Error("Couldn't resend verification email");
   return res.json();
 }
+
+export async function getGithubInstallations(): Promise<GithubInstallation[]> {
+  const res = await apiFetch("/github/installations")
+  if (!res.ok) throw new Error("Couldn't load Github installations")
+  return res.json()
+}
+
+export async function getGithubRepos(): Promise<GithubRepo[]> {
+  const res = await apiFetch("/github/repos");
+  if (!res.ok) throw new Error("Couldn't load GitHub repos");
+  return res.json();
+}
+
+export async function getGithubInstallUrl(): Promise<string> {
+  const res = await apiFetch("/github/install-url")
+  if (!res.ok) throw new Error("Couldn't start the Github connection")
+    const data: { url: string } = await res.json()
+  return data.url
+}
+
+
+
+
 
 export { BACKEND_HOST };
