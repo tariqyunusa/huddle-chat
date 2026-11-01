@@ -71,6 +71,7 @@ function App() {
   const [creating, setCreating] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [billingOpen, setBillingOpen] = useState(false);
+  const [settingsSection, setSettingsSection] = useState<string | undefined>();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsMenuFocusRef = useRef<(() => void) | null>(null);
   const [userPlan, setUserPlan] = useState<string>(
@@ -83,8 +84,22 @@ function App() {
 
   const closeSettings = useCallback(() => {
     setSettingsOpen(false);
+    setSettingsSection(undefined);
     window.requestAnimationFrame(() => settingsMenuFocusRef.current?.());
   }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+    const url = new URL(window.location.href);
+    const result = url.searchParams.get("github");
+    if (!result) return;
+    url.searchParams.delete("github");
+    window.history.replaceState({}, "", url);
+    if (result === "connected") showToast("success", "GitHub connected.");
+    else showToast("error", "Couldn't connect GitHub. Try again.");
+    setSettingsSection("connectors");
+    setSettingsOpen(true);
+  }, [userId]);
 
   useEffect(() => {
     if (!userId) return;
@@ -286,7 +301,9 @@ function App() {
             disabled={creating}
             className="no-inset w-full flex items-center gap-2 rounded-lg  cursor-pointer  px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-200 transition-colors disabled:opacity-50"
           >
-            <div className="text-lg leading-none bg-stone-100 rounded-xl px-1 py-0.5 flex justify-center items-center">+</div>
+            <div className="text-lg leading-none bg-stone-100 rounded-xl px-1 py-0.5 flex justify-center items-center">
+              +
+            </div>
             {creating ? "Creating…" : "New"}
           </button>
         </div>
@@ -357,7 +374,7 @@ function App() {
         />
       )}
 
-      {settingsOpen && <SettingsModal onClose={closeSettings} />}
+      {settingsOpen && <SettingsModal initialSection={settingsSection} onClose={closeSettings} />}
 
       <div className="flex-1 flex flex-col min-w-0">
         <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-stone-200">

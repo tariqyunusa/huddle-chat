@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ComponentType } from "react";
-import { Brain, X, type LucideIcon } from "lucide-react";
+import { X, Settings, User,UserShield, HardDrive, Plug, type LucideIcon } from "lucide-react";
 import MemorySettings from "./MemorySettings";
+import ConnectorsSettings from "./ConnectorsSettings"
 
 type SettingsSectionConfig = {
   id: string;
@@ -12,16 +13,45 @@ type SettingsSectionConfig = {
 
 const SETTINGS_SECTIONS: SettingsSectionConfig[] = [
   {
-    id: "memory",
-    label: "Memory",
-    icon: Brain,
+    id: "general",
+    label: "General",
+    icon: Settings,
     group: "Settings",
     component: MemorySettings,
   },
+   {
+    id: "account",
+    label: "Account",
+    icon: User,
+    group: "Settings",
+    component: MemorySettings,
+  },
+   {
+    id: "privacy",
+    label: "Privacy",
+    icon: UserShield,
+    group: "Settings",
+    component: MemorySettings,
+  },
+  
+  {
+    id: "memory",
+    label: "Memory",
+    icon: HardDrive,
+    group: "Settings",
+    component: MemorySettings,
+  },
+  {
+  id: "connectors",
+  label: "Connectors",
+  icon: Plug,
+  group: "Integrations",
+  component: ConnectorsSettings,
+},
 ];
 
-export default function SettingsModal({ onClose }: { onClose: () => void }) {
-  const [activeSection, setActiveSection] = useState<string>(SETTINGS_SECTIONS[0]?.id ?? "");
+export default function SettingsModal({ onClose, initialSection  }: { onClose: () => void; initialSection?: string }) {
+  const [activeSection, setActiveSection] = useState<string>(initialSection ?? SETTINGS_SECTIONS[0]?.id ?? "");
   const [hasDirtyEdit, setHasDirtyEdit] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -75,7 +105,7 @@ export default function SettingsModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-stone-950/45 p-0 md:p-6"
+      className="fixed inset-0 z-100 flex items-center justify-center bg-stone-950/45 p-0 md:p-6"
       onClick={(event) => {
         if (event.target === event.currentTarget) closeWhenSafe();
       }}
