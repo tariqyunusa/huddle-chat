@@ -4,6 +4,58 @@ const isLocal =
   BACKEND_HOST.includes("localhost") || BACKEND_HOST.includes("127.0.0.1");
 const BASE_URL = `${isLocal ? "http" : "https"}://${BACKEND_HOST}`;
 
+export type SessionRepo = {
+  id: string;
+  name: string;
+  status: "pending" | "syncing" | "ready" | "failed";
+  error: string | null;
+  file_count: number;
+  branch: string | null;
+  indexed: boolean;
+  last_synced_at: string | null;
+}
+
+export class ConfirmPrivateError extends Error {
+  constructor() {
+    super("confirm_private_required")
+    this.name = "ConfirmPrivateError"
+  }
+}
+
+export async function getSessionRepos(sessionId: string): Promise<SessionRepo[]> {
+  const res = await apiFetch(`/sessions/${sessionId}/repos`)
+  if (!res.ok) throw new Error("Couldn't load repos")
+    return res.json()
+}
+
+export async function attachRepo(
+  sessionId: string,
+  payload: { installation_id: number; full_name: string; confirm_private?: boolean},
+): Promise<void> {
+  const res = await apiFetch(`/sessions/${sessionId}/repos`, {
+    method: "POST",
+    headers: { "Content-Type" : "application/json"},
+    body: JSON.stringify(payload)
+  })
+  if(!res.ok) {
+    const body = await res.json().catch(() => null)
+    if (res.status === 409 && body?.detail === "confirm_private_required") {
+      throw new ConfirmPrivateError()
+    }
+    throw new Error(typeof body?.detail === "string" ? body.detail : "Couldn't attach that repo")
+
+  }
+}
+
+export async function removeRepo(sessionId: string, repoId: string): Promise<void> {
+  const res = await apiFetch(`/sessions/${sessionId}/repos/${repoId}`, {method: "DELETE"})
+  if (res.status === 404) return;
+  if (!res.ok) {
+    const body = await res.json().catch(() => null)
+    throw new Error(typeof body?.detail === "string" ? body.detail : "Couldn't remove that repo")
+  }
+}
+
 export type SessionSummary = {
   id: string;
   title: string | null;
