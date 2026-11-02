@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { BACKEND_HOST, fetchParticipants, type Participant } from "./api";
-import { Plus } from "lucide-react";
+import { Plus, Code } from "lucide-react";
 import { useToast } from "./Toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import MermaidDiagram from "./MermaidDiagram";
 import InviteModal from "./InviteModal";
+import RepoPanel from "./RepoPanel";
 
 type ChatMessage = {
   type: "message" | "thinking" | "error";
@@ -59,6 +60,7 @@ export default function ChatView({
 }: ChatViewProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  const [repoPanelOpen, setRepoPanelOpen] = useState(false);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [thinking, setThinking] = useState(false);
   const [statusLabel, setStatusLabel] = useState<string | null>(null);
@@ -188,6 +190,14 @@ export default function ChatView({
             ))}
           </div>
           <button
+            onClick={() => setRepoPanelOpen(true)}
+            title="Code repositories"
+            aria-label="Code repositories"
+            className="no-inset outline-none border-none cursor-pointer"
+          >
+            <Code size={16} />
+          </button>
+          <button
             onClick={() => setInviteModalOpen(true)}
             className="no-inset outline-none border-none cursor-pointer"
           >
@@ -244,19 +254,43 @@ export default function ChatView({
           onClose={() => setInviteModalOpen(false)}
         />
       )}
+      {repoPanelOpen && <RepoPanel sessionId={sessionId} onClose={() => setRepoPanelOpen(false)} />}
     </div>
   );
 }
 
 const markdownComponents = {
+  pre({ children }: any) {
+    // Mermaid diagrams render their own container, so don't wrap them
+    const child: any = Array.isArray(children) ? children[0] : children;
+    if (/language-mermaid/.test(child?.props?.className || ""))
+      return <>{children}</>;
+    return (
+      <pre className="my-3 overflow-x-auto rounded-lg bg-stone-900 p-4 text-[13px] leading-relaxed text-stone-100 dark:bg-black/60">
+        {children}
+      </pre>
+    );
+  },
   code({ className, children, ...props }: any) {
     const match = /language-(\w+)/.exec(className || "");
     const lang = match?.[1];
+    const text = String(children);
     if (lang === "mermaid") {
-      return <MermaidDiagram code={String(children).trim()} />;
+      return <MermaidDiagram code={text.trim()} />;
+    }
+    const isBlock = !!lang || text.includes("\n");
+    if (isBlock) {
+      return (
+        <code className="bg-transparent p-0 font-mono text-inherit" {...props}>
+          {children}
+        </code>
+      );
     }
     return (
-      <code className="bg-stone-100 rounded px-1 py-0.5 text-xs" {...props}>
+      <code
+        className="rounded bg-stone-100 px-1 py-0.5 text-xs text-stone-800 dark:bg-stone-800 dark:text-stone-100"
+        {...props}
+      >
         {children}
       </code>
     );
