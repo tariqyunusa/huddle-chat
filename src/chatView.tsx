@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { BACKEND_HOST, fetchParticipants, type Participant } from "./api";
-import { Plus, Code } from "lucide-react";
+import { Plus, FolderRoot } from "lucide-react";
 import { useToast } from "./Toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -195,7 +195,7 @@ export default function ChatView({
             aria-label="Code repositories"
             className="no-inset outline-none border-none cursor-pointer"
           >
-            <Code size={16} />
+            <FolderRoot size={16} />
           </button>
           <button
             onClick={() => setInviteModalOpen(true)}
