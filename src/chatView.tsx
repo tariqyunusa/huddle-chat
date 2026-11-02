@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { BACKEND_HOST, fetchParticipants, type Participant } from "./api";
-import { Plus, FolderRoot } from "lucide-react";
+import { Plus, FolderRoot, CornerDownLeft } from "lucide-react";
 import { useToast } from "./Toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -232,7 +232,8 @@ export default function ChatView({
       <div className="chat-input-area px-6 py-4">
         <div className="chat-fog-input" aria-hidden="true" />
         <div className="relative z-10 max-w-2xl mx-auto flex items-center gap-3">
-          <input
+          <div className="flex flex-col w-full relative bg-stone-50" >
+            <input
             className="flex-1 bg-stone-50 border border-stone-300 rounded-xl px-4 py-2.5 text-base outline-none"
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -241,10 +242,17 @@ export default function ChatView({
           />
           <button
             onClick={sendMessage}
-            className="new-session-button cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-stone-900 transition-colors"
+            className="new-session-button absolute right-1 top-[5%] cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-stone-900 transition-colors"
           >
-            Send
+            <CornerDownLeft  size={18} />
           </button>
+          <div>
+            <button>
+              <Plus size={16} />
+            </button>
+          </div>
+          </div>
+          
         </div>
       </div>
 
