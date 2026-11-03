@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { BACKEND_HOST, fetchParticipants, type Participant } from "./api";
-import { Plus, FolderRoot, CornerDownLeft } from "lucide-react";
+import { Plus, FolderRoot, CornerDownLeft, Upload, GitBranch } from "lucide-react";
 import { useToast } from "./Toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -9,9 +9,11 @@ import InviteModal from "./InviteModal";
 import RepoPanel from "./RepoPanel";
 
 type ChatMessage = {
-  type: "message" | "thinking" | "error";
+  type: "message" | "thinking" | "error" | "document_shared";
   author?: string;
   content?: string;
+  title?: string;
+  shared_by?: string;
 };
 
 type ChatViewProps = {
@@ -66,7 +68,12 @@ export default function ChatView({
   const [statusLabel, setStatusLabel] = useState<string | null>(null);
   const [memorySaving, setMemorySaving] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [attachMenuOpen, setAttachMenuOpen] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
+  const attachMenuRef = useRef<HTMLDivElement>(null);
+  const attachButtonRef = useRef<HTMLButtonElement>(null);
+  const menuItemsRef = useRef<Array<HTMLButtonElement | null>>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const MIN_STATUS_MS = 800;
   const statusShownAt = useRef(0);
@@ -116,6 +123,10 @@ export default function ChatView({
         setThinking(true);
         return;
       }
+      if (data.type === "document_shared") {
+        setMessages((prev) => [...prev, data]);
+        return;
+      }
       if (data.type === "talon_status") {
         if (data.phase === "idle") clearStatus();
         else showStatus(data.label);
@@ -159,6 +170,26 @@ export default function ChatView({
   }, [sessionId, displayName]);
 
   useEffect(() => {
+    if (!attachMenuOpen) return;
+    menuItemsRef.current[0]?.focus();
+    const onPointerDown = (event: PointerEvent) => {
+      if (!attachMenuRef.current?.contains(event.target as Node)) setAttachMenuOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setAttachMenuOpen(false);
+        attachButtonRef.current?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [attachMenuOpen]);
+
+  useEffect(() => {
     fetchParticipants(sessionId)
       .then(setParticipants)
       .catch(() => showToast("error", "Couldn't load participants."));
@@ -177,6 +208,29 @@ export default function ChatView({
     }
     wsRef.current.send(JSON.stringify({ content: trimmed }));
     setInput("");
+  }
+
+  async function uploadFile(file: File | undefined) {
+    if (!file) return;
+    try {
+      const text = await file.text();
+      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+        showToast("error", "Not connected. Try refreshing the page.");
+      } else if (!text.trim()) {
+        showToast("error", "That file is empty.");
+      } else if (text.includes("\0")) {
+        showToast("error", "That file doesn't look like text.");
+      } else if (text.length > 20_000) {
+        showToast("error", "That file is too long. The limit is 20,000 characters.");
+      } else {
+        wsRef.current.send(JSON.stringify({ type: "share_document", title: file.name, content: text }));
+        showToast("success", `Shared ${file.name} with the session.`);
+      }
+    } catch {
+      showToast("error", "That file doesn't look like text.");
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   }
 
   return (
@@ -209,9 +263,9 @@ export default function ChatView({
       <div className="relative flex-1 overflow-y-auto w-full">
         <div className="chat-fog-edge chat-fog-top" aria-hidden="true" />
         <div className="max-w-2xl mx-auto px-6 py-6 space-y-5">
-          {messages.map((msg, i) => (
-            <MessageRow key={i} msg={msg} isSelf={msg.author === displayName} />
-          ))}
+          {messages.map((msg, i) => msg.type === "document_shared" ? (
+            <div key={i} className="text-center text-xs text-stone-400">{msg.shared_by} shared “{msg.title}”</div>
+          ) : <MessageRow key={i} msg={msg} isSelf={msg.author === displayName} />)}
           {thinking && (
             <div className="flex items-center gap-2 text-sm text-stone-400">
               <span className="font-medium text-stone-500">Talon</span>
@@ -231,28 +285,57 @@ export default function ChatView({
 
       <div className="chat-input-area px-6 py-4">
         <div className="chat-fog-input" aria-hidden="true" />
-        <div className="relative z-10 max-w-2xl mx-auto flex items-center gap-3">
-          <div className="flex flex-col w-full relative bg-stone-50" >
+        <div className="relative z-10 max-w-2xl mx-auto">
+          <div ref={attachMenuRef} className="chat-composer relative flex items-center gap-1 rounded-2xl px-1 py-0.5 transition-colors">
+            <button
+              type="button"
+              ref={attachButtonRef}
+              aria-label="Add"
+              aria-haspopup="menu"
+              aria-expanded={attachMenuOpen}
+              onClick={() => setAttachMenuOpen((open) => !open)}
+              className="composer-btn no-inset flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-colors"
+            >
+              <Plus size={18} />
+            </button>
+
+            {attachMenuOpen && (
+              <div className="composer-menu" role="menu">
+                <button type="button" role="menuitem" className="composer-menu-item no-inset" ref={(node) => { menuItemsRef.current[0] = node; }}
+                  onKeyDown={(event) => {
+                    if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); menuItemsRef.current[1]?.focus(); }
+                  }}
+                  onClick={() => { setAttachMenuOpen(false); fileInputRef.current?.click(); }}>
+                  <Upload size={16} /><span>Upload from computer</span>
+                </button>
+                <button type="button" role="menuitem" className="composer-menu-item no-inset" ref={(node) => { menuItemsRef.current[1] = node; }}
+                  onKeyDown={(event) => {
+                    if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); menuItemsRef.current[0]?.focus(); }
+                  }}
+                  onClick={() => { setAttachMenuOpen(false); setRepoPanelOpen(true); }}>
+                  <GitBranch size={16} /><span>Add from GitHub</span>
+                </button>
+              </div>
+            )}
+            <input ref={fileInputRef} type="file" hidden accept=".txt,.md,.markdown,.csv,.json,.yml,.yaml,.toml,.xml,.html,.css,.js,.jsx,.ts,.tsx,.py,.sql,.sh,.log" onChange={(event) => void uploadFile(event.target.files?.[0])} />
+
             <input
-            className="flex-1 bg-stone-50 border border-stone-300 rounded-xl px-4 py-2.5 text-base outline-none"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            placeholder="Message the session…"
-          />
-          <button
-            onClick={sendMessage}
-            className="new-session-button absolute right-1 top-[5%] cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-stone-900 transition-colors"
-          >
-            <CornerDownLeft  size={18} />
-          </button>
-          <div>
-            <button>
-              <Plus size={16} />
+              className="min-w-0 flex-1 border-none bg-transparent px-2 py-2 text-base text-stone-800 outline-none placeholder:text-stone-400"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              placeholder="Write a message…"
+            />
+
+            <button
+              onClick={sendMessage}
+              disabled={!input.trim()}
+              aria-label="Send"
+              className="composer-send  no-inset flex h-9 w-9 shrink-0 cursor-pointer hover:bg-stone-200 items-center justify-center rounded-xl transition-opacity disabled:cursor-default disabled:opacity-40"
+            >
+              <CornerDownLeft size={16} />
             </button>
           </div>
-          </div>
-          
         </div>
       </div>
 
@@ -262,7 +345,12 @@ export default function ChatView({
           onClose={() => setInviteModalOpen(false)}
         />
       )}
-      {repoPanelOpen && <RepoPanel sessionId={sessionId} onClose={() => setRepoPanelOpen(false)} />}
+      {repoPanelOpen && (
+        <RepoPanel
+          sessionId={sessionId}
+          onClose={() => setRepoPanelOpen(false)}
+        />
+      )}
     </div>
   );
 }
