@@ -118,7 +118,7 @@ export default function SettingsModal({ onClose, initialSection  }: { onClose: (
         tabIndex={-1}
         className="flex h-full w-full flex-col overflow-hidden border border-stone-200 bg-white text-stone-800 shadow-2xl dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 md:h-[80vh] md:max-w-5xl md:rounded-2xl"
       >
-        <header className="flex shrink-0 items-center justify-between border-b border-stone-200 px-5 py-4 dark:border-stone-700 md:px-7">
+        <header className="flex shrink-0 items-center justify-between   px-5 py-3  md:px-7">
           <h1 id="settings-title" className="text-lg font-semibold text-stone-900 dark:text-stone-100">
             Settings
           </h1>

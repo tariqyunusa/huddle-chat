@@ -12,7 +12,13 @@ import Login from "./Login";
 import { useToast } from "./Toast";
 import ForgotPasswordForm from "./ForgotPasswordForm";
 import ResetPasswordPage from "./ResetPasswordPage";
-import { Menu } from "lucide-react";
+import {
+  Menu,
+  ListSortDescending,
+  ChevronUp,
+  ChevronDown,
+  Plus,
+} from "lucide-react";
 import SessionMenu from "./SessionMenu";
 import { AnimatePresence } from "motion/react";
 import VerifyEmailPage from "./VerifyEmailPage";
@@ -73,10 +79,21 @@ function App() {
   const [billingOpen, setBillingOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<string | undefined>();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => localStorage.getItem("huddle_sidebar_collapsed") === "true",
+  );
   const settingsMenuFocusRef = useRef<(() => void) | null>(null);
   const [userPlan, setUserPlan] = useState<string>(
     localStorage.getItem("huddle_plan") ?? "free",
   );
+
+  const activeIndex = sessions.findIndex((s) => s.id === activeSessionId);
+  const prevSession = activeIndex > 0 ? sessions[activeIndex - 1] : null;
+  const nextSession =
+    activeIndex === -1
+      ? (sessions[0] ?? null)
+      : (sessions[activeIndex + 1] ?? null);
+
   const [usage, setUsage] = useState<{
     tokensUsed: number;
     tokensLimit: number;
@@ -87,6 +104,10 @@ function App() {
     setSettingsSection(undefined);
     window.requestAnimationFrame(() => settingsMenuFocusRef.current?.());
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("huddle_sidebar_collapsed", String(sidebarCollapsed));
+  }, [sidebarCollapsed]);
 
   useEffect(() => {
     if (!userId) return;
@@ -291,80 +312,135 @@ function App() {
         />
       )}
       <aside
-        className={`fixed md:static inset-y-0 left-0 z-40 w-64 bg-stone-50 border-r border-stone-200 flex flex-col transform transition-transform duration-200 ${
+        className={`fixed md:static inset-y-0 left-0 z-40 w-64 ${
+          sidebarCollapsed ? "md:w-12" : "md:w-64"
+        } bg-stone-50 border-r border-stone-200 flex flex-col transform transition-transform duration-200 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
-        <div className="px-3 py-3">
-          <button
-            onClick={handleCreateSession}
-            disabled={creating}
-            className="no-inset w-full flex items-center gap-2 rounded-lg  cursor-pointer  px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-200 transition-colors disabled:opacity-50"
-          >
-            <div className="text-lg leading-none bg-stone-100 rounded-xl px-1 py-0.5 flex justify-center items-center">
-              +
-            </div>
-            {creating ? "Creating…" : "New"}
-          </button>
-        </div>
-        {/* <div className="px-3 py-3 flex items-center gap-2 md:hidden">
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="text-stone-600"
-          >
-            <X size={18} />
-          </button>
-        </div> */}
-
-        <div className="flex-1 overflow-y-auto px-2">
-          <p className="px-2 py-2 text-xs font-medium text-stone-400 uppercase tracking-wide">
-            Sessions
-          </p>
-          {sessions.length === 0 && (
-            <p className="px-2 py-2 text-sm text-stone-400">No sessions yet</p>
-          )}
-          {sessions.map((s) => (
-            <div
-              key={s.id}
-              onClick={() => openSession(s.id)}
-              className={`group flex items-center justify-between px-3 py-2 rounded-lg dark:hover:bg-stone-500 text-sm truncate transition-colors cursor-pointer ${
-                activeSessionId === s.id
-                  ? "bg-stone-200 text-stone-900"
-                  : "text-stone-600 hover:bg-stone-200"
-              }`}
+        {/* Full sidebar. On mobile this is always the drawer content. */}
+        <div
+          className={`flex h-full w-64 shrink-0 flex-col ${sidebarCollapsed ? "md:hidden" : ""}`}
+        >
+          <div className="flex items-center justify-between px-3 pt-3">
+            <button
+              onClick={() => setSidebarCollapsed(true)}
+              aria-label="Collapse sidebar"
+              title="Collapse sidebar"
+              className="composer-btn no-inset hidden h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors md:flex"
             >
-              <span className="truncate flex-1 font-medium text-[14px]">
-                {s.title || "Untitled session"}
-              </span>
-              <SessionMenu
-                sessionId={s.id}
-                currentTitle={s.title || ""}
-                onRenamed={handleTitleUpdate}
-                onDeleted={handleSessionDeleted}
-              />
+              <ListSortDescending size={16} />
+            </button>
+            <div className="ml-auto flex items-center gap-1">
+              <button
+                onClick={() => prevSession && openSession(prevSession.id)}
+                disabled={!prevSession}
+                aria-label="Previous session"
+                title="Previous session"
+                className="composer-btn no-inset flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors disabled:pointer-events-none disabled:opacity-40"
+              >
+                <ChevronUp size={16} />
+              </button>
+              <button
+                onClick={() => nextSession && openSession(nextSession.id)}
+                disabled={!nextSession}
+                aria-label="Next session"
+                title="Next session"
+                className="composer-btn no-inset flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors disabled:pointer-events-none disabled:opacity-40"
+              >
+                <ChevronDown size={16} />
+              </button>
             </div>
-          ))}
-        </div>
+          </div>
 
-        <div className="px-4 py-3  flex items-center justify-between">
-          <UserMenu
-            displayName={displayName}
-            plan={userPlan}
-            onLogout={handleLogout}
-            onBilling={() => setBillingOpen(true)}
-            onSettings={() => setSettingsOpen(true)}
-            settingsFocusRef={settingsMenuFocusRef}
-          />
-          <div className="flex items-center gap-1">
-            <ThemeMenu />
-            {usage && (
-              <UsageIndicator
-                tokensUsed={usage.tokensUsed}
-                tokensLimit={usage.tokensLimit}
-              />
+          <div className="px-3 py-3">
+            <button
+              onClick={handleCreateSession}
+              disabled={creating}
+              className="no-inset w-full flex items-center gap-2 rounded-lg cursor-pointer px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-200 transition-colors disabled:opacity-50"
+            >
+              <div className="text-lg leading-none bg-stone-100 rounded-xl px-1 py-0.5 flex justify-center items-center">
+                +
+              </div>
+              {creating ? "Creating…" : "New"}
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-2">
+            <p className="px-2 py-2 text-xs font-medium text-stone-400 uppercase tracking-wide">
+              Sessions
+            </p>
+            {sessions.length === 0 && (
+              <p className="px-2 py-2 text-sm text-stone-400">
+                No sessions yet
+              </p>
             )}
+            {sessions.map((s) => (
+              <div
+                key={s.id}
+                onClick={() => openSession(s.id)}
+                className={`group flex items-center justify-between px-3 py-2 rounded-lg dark:hover:bg-stone-500 text-sm truncate transition-colors cursor-pointer ${
+                  activeSessionId === s.id
+                    ? "bg-stone-200 text-stone-900"
+                    : "text-stone-600 hover:bg-stone-200"
+                }`}
+              >
+                <span className="truncate flex-1 font-medium text-[14px]">
+                  {s.title || "Untitled session"}
+                </span>
+                <SessionMenu
+                  sessionId={s.id}
+                  currentTitle={s.title || ""}
+                  onRenamed={handleTitleUpdate}
+                  onDeleted={handleSessionDeleted}
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="px-4 py-3 flex items-center justify-between">
+            <UserMenu
+              displayName={displayName}
+              plan={userPlan}
+              onLogout={handleLogout}
+              onBilling={() => setBillingOpen(true)}
+              onSettings={() => setSettingsOpen(true)}
+              settingsFocusRef={settingsMenuFocusRef}
+            />
+            <div className="flex items-center gap-1">
+              <ThemeMenu />
+              {usage && (
+                <UsageIndicator
+                  tokensUsed={usage.tokensUsed}
+                  tokensLimit={usage.tokensLimit}
+                />
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Collapsed rail, desktop only */}
+        {sidebarCollapsed && (
+          <div className="hidden h-full w-12 flex-col items-center gap-1 py-3 md:flex">
+            <button
+              onClick={() => setSidebarCollapsed(false)}
+              aria-label="Expand sidebar"
+              title="Expand sidebar"
+              className="composer-btn no-inset flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors"
+            >
+              <ListSortDescending size={16} />
+            </button>
+            <button
+              onClick={handleCreateSession}
+              disabled={creating}
+              aria-label="New session"
+              title="New session"
+              className="composer-btn no-inset flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors disabled:opacity-50"
+            >
+              <Plus size={16} />
+            </button>
+          </div>
+        )}
       </aside>
 
       {billingOpen && (
@@ -374,7 +450,12 @@ function App() {
         />
       )}
 
-      {settingsOpen && <SettingsModal initialSection={settingsSection} onClose={closeSettings} />}
+      {settingsOpen && (
+        <SettingsModal
+          initialSection={settingsSection}
+          onClose={closeSettings}
+        />
+      )}
 
       <div className="flex-1 flex flex-col min-w-0">
         <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-stone-200">

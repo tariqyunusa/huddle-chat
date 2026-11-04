@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { BACKEND_HOST, fetchParticipants, type Participant } from "./api";
-import { Plus, FolderRoot, CornerDownLeft, Upload, GitBranch } from "lucide-react";
+import { Plus, GitCompareArrows, CornerDownLeft, Upload,  } from "lucide-react";
 import { useToast } from "./Toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -249,7 +249,7 @@ export default function ChatView({
             aria-label="Code repositories"
             className="no-inset outline-none border-none cursor-pointer"
           >
-            <FolderRoot size={16} />
+            <GitCompareArrows size={16} />
           </button>
           <button
             onClick={() => setInviteModalOpen(true)}
@@ -313,7 +313,7 @@ export default function ChatView({
                     if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); menuItemsRef.current[0]?.focus(); }
                   }}
                   onClick={() => { setAttachMenuOpen(false); setRepoPanelOpen(true); }}>
-                  <GitBranch size={16} /><span>Add from GitHub</span>
+                  <GitCompareArrows size={16} /><span>Add from GitHub</span>
                 </button>
               </div>
             )}
