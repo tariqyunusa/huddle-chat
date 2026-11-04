@@ -43,11 +43,11 @@ export default function RepoPanel({ sessionId, onClose }: { sessionId: string; o
         }
       }
       try {
-        const g = await getGithubRepos();            // first: it prunes uninstalled apps server-side
+        const g = await getGithubRepos();
         const i = await getGithubInstallations();
         if (!cancelled) { setGranted(g); setConnected(i.length > 0); }
       } catch {
-        /* GitHub unreachable: the attach list stays empty */
+     
       }
     })();
     return () => { cancelled = true; };
@@ -116,7 +116,7 @@ export default function RepoPanel({ sessionId, onClose }: { sessionId: string; o
         aria-labelledby="repo-panel-title"
         className="flex max-h-[80vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white text-stone-800 shadow-2xl dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
       >
-        <header className="flex items-center justify-between border-b border-stone-200 px-5 py-4 dark:border-stone-700">
+        <header className="flex items-center justify-between  px-5 py-2 ">
           <h2 id="repo-panel-title" className="text-base font-semibold">Code in this session</h2>
           <button
             onClick={onClose}
@@ -129,7 +129,7 @@ export default function RepoPanel({ sessionId, onClose }: { sessionId: string; o
 
         <div className="space-y-6 overflow-y-auto px-5 py-5">
           <section className="space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-stone-400">Attached</h3>
+            {/* <h3 className="text-xs font-semibold uppercase tracking-wider text-stone-400">Attached</h3> */}
             {repos === null ? (
               <p className="text-sm text-stone-500">Loading…</p>
             ) : repos.length === 0 ? (
@@ -137,7 +137,7 @@ export default function RepoPanel({ sessionId, onClose }: { sessionId: string; o
                 No repo attached yet. Attach one so Talon can read and search your code.
               </p>
             ) : (
-              <ul className="divide-y divide-stone-100 rounded-xl border border-stone-200 dark:divide-stone-800 dark:border-stone-700">
+              <ul className="divide-y divide-stone-100 rounded-xl  dark:divide-stone-800 dark:border-stone-700">
                 {repos.map((r) => (
                   <li key={r.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
                     <div className="min-w-0">
@@ -170,7 +170,7 @@ export default function RepoPanel({ sessionId, onClose }: { sessionId: string; o
                 No other repos available. Grant more in Settings → Connectors.
               </p>
             ) : (
-              <ul className="divide-y divide-stone-100 rounded-xl border border-stone-200 dark:divide-stone-800 dark:border-stone-700">
+              <ul className="divide-y divide-stone-100 rounded-xl  dark:divide-stone-800 ">
                 {attachable.map((g) => (
                   <li key={g.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
                     <span className="flex min-w-0 items-center gap-2 text-sm">
