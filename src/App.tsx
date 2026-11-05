@@ -382,7 +382,7 @@ function App() {
                 className={`group flex items-center justify-between px-3 py-2 rounded-lg dark:hover:bg-stone-500 text-sm truncate transition-colors cursor-pointer ${
                   activeSessionId === s.id
                     ? "bg-stone-200 text-stone-900"
-                    : "text-stone-600 hover:bg-stone-200"
+                    : "text-stone-600 hover:bg-stone-100"
                 }`}
               >
                 <span className="truncate flex-1 font-medium text-[14px]">
