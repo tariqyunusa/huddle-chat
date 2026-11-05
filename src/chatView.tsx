@@ -7,6 +7,7 @@ import remarkGfm from "remark-gfm";
 import MermaidDiagram from "./MermaidDiagram";
 import InviteModal from "./InviteModal";
 import RepoPanel from "./RepoPanel";
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url"
 
 type ChatMessage = {
   type: "message" | "thinking" | "error" | "document_shared";
@@ -23,6 +24,26 @@ type ChatViewProps = {
   onTitleUpdate?: (sessionId: string, title: string) => void;
   onUsageUpdate?: (tokensUsed: number, tokensLimit: number) => void;
 };
+
+const MAX_DOC_CHARS = 20_000
+const MAX_PDF_BYTES = 10 * 1024 * 1024
+
+async function exractPdfText(file: File): Promise<string> {
+  const pdfjs = await import("pdfjs-dist")
+  pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
+  const data = new Uint8Array(await file.arrayBuffer())
+  const pdf = await pdfjs.getDocument({ data }).promise
+  const pages: string[] = []
+  for (let i = 1;i <= pdf.numPages; i++) {
+    const content = await (await pdf.getPage(i)).getTextContent()
+    pages.push(
+      content.items
+      .map((it: any) => ("str" in it ? it.str + (it.hasEOL ? "\n" :" ") : ""))
+      .join("")
+    )
+  }
+  return pages.join("\n\n").replace(/[ \t]+\n/g, "\n").trim()
+}
 
 const PARTICIPANT_COLORS = [
   { text: "text-emerald-700", bg: "bg-emerald-700" },
