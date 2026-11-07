@@ -1,13 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { BACKEND_HOST, fetchParticipants, type Participant } from "./api";
-import { Plus, GitCompareArrows, CornerDownLeft, Upload,  } from "lucide-react";
+import {
+  Plus,
+  GitCompareArrows,
+  CornerDownLeft,
+  Upload,
+  FileText,
+  Loader2,
+  X,
+} from "lucide-react";
 import { useToast } from "./Toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import MermaidDiagram from "./MermaidDiagram";
 import InviteModal from "./InviteModal";
 import RepoPanel from "./RepoPanel";
-import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url"
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 type ChatMessage = {
   type: "message" | "thinking" | "error" | "document_shared";
@@ -15,6 +23,8 @@ type ChatMessage = {
   content?: string;
   title?: string;
   shared_by?: string;
+  thumb?: string;
+  kind: "pdf" | "text";
 };
 
 type ChatViewProps = {
@@ -25,24 +35,83 @@ type ChatViewProps = {
   onUsageUpdate?: (tokensUsed: number, tokensLimit: number) => void;
 };
 
-const MAX_DOC_CHARS = 20_000
-const MAX_PDF_BYTES = 10 * 1024 * 1024
+type Attachment = {
+  id: string;
+  name: string;
+  kind: "pdf" | "text";
+  status: "loading" | "ready";
+  text: string;
+  truncated: boolean;
+  thumb?: string;
+};
 
-async function exractPdfText(file: File): Promise<string> {
-  const pdfjs = await import("pdfjs-dist")
-  pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
-  const data = new Uint8Array(await file.arrayBuffer())
-  const pdf = await pdfjs.getDocument({ data }).promise
-  const pages: string[] = []
-  for (let i = 1;i <= pdf.numPages; i++) {
-    const content = await (await pdf.getPage(i)).getTextContent()
+const MAX_DOC_CHARS = 20_000;
+const MAX_PDF_BYTES = 10 * 1024 * 1024;
+const MAX_ATTACHMENTS = 3;
+
+async function readPdf(file: File): Promise<{ text: string; thumb?: string }> {
+  const pdfjs = await import("pdfjs-dist");
+  pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+  const data = new Uint8Array(await file.arrayBuffer());
+  const pdf = await pdfjs.getDocument({ data }).promise;
+
+  const pages: string[] = [];
+  let total = 0;
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const content = await (await pdf.getPage(i)).getTextContent();
+    const pageText = content.items
+      .map((it: any) => ("str" in it ? it.str + (it.hasEOL ? "\n" : " ") : ""))
+      .join("");
+    pages.push(pageText);
+    total += pageText.length;
+    if (total > MAX_DOC_CHARS) break; // we only keep this much anyway
+  }
+
+  let thumb: string | undefined;
+  try {
+    const page = await pdf.getPage(1);
+    const base = page.getViewport({ scale: 1 });
+    const viewport = page.getViewport({ scale: 180 / base.width });
+    const canvas = document.createElement("canvas");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      await page.render({ canvas, canvasContext: ctx, viewport }).promise;
+      thumb = canvas.toDataURL("image/jpeg", 0.7);
+    }
+  } catch {
+    /* the thumbnail is optional */
+  }
+  return {
+    text: pages
+      .join("\n\n")
+      .replace(/[ \t]+\n/g, "\n")
+      .trim(),
+    thumb,
+  };
+}
+
+async function extractPdfText(file: File): Promise<string> {
+  const pdfjs = await import("pdfjs-dist");
+  pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+  const data = new Uint8Array(await file.arrayBuffer());
+  const pdf = await pdfjs.getDocument({ data }).promise;
+  const pages: string[] = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const content = await (await pdf.getPage(i)).getTextContent();
     pages.push(
       content.items
-      .map((it: any) => ("str" in it ? it.str + (it.hasEOL ? "\n" :" ") : ""))
-      .join("")
-    )
+        .map((it: any) =>
+          "str" in it ? it.str + (it.hasEOL ? "\n" : " ") : "",
+        )
+        .join(""),
+    );
   }
-  return pages.join("\n\n").replace(/[ \t]+\n/g, "\n").trim()
+  return pages
+    .join("\n\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .trim();
 }
 
 const PARTICIPANT_COLORS = [
@@ -84,6 +153,8 @@ export default function ChatView({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [repoPanelOpen, setRepoPanelOpen] = useState(false);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const attachmentsRef = useRef<Attachment[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [thinking, setThinking] = useState(false);
   const [statusLabel, setStatusLabel] = useState<string | null>(null);
@@ -99,6 +170,12 @@ export default function ChatView({
   const MIN_STATUS_MS = 800;
   const statusShownAt = useRef(0);
   const statusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function updateAttachments(fn: (prev: Attachment[]) => Attachment[]) {
+    const next = fn(attachmentsRef.current);
+    attachmentsRef.current = next;
+    setAttachments(next);
+  }
 
   function showStatus(label: string) {
     if (statusTimer.current) clearTimeout(statusTimer.current);
@@ -127,6 +204,7 @@ export default function ChatView({
     setThinking(false);
     setStatusLabel(null);
     setMemorySaving(false);
+    updateAttachments(() => []);
 
     const token = localStorage.getItem("huddle_token");
     const isLocal =
@@ -153,7 +231,7 @@ export default function ChatView({
         else showStatus(data.label);
         return;
       }
-      if (data.type === "memory_saving") {
+      if (data.type === "memory_status") {
         setMemorySaving(data.active);
         return;
       }
@@ -194,7 +272,8 @@ export default function ChatView({
     if (!attachMenuOpen) return;
     menuItemsRef.current[0]?.focus();
     const onPointerDown = (event: PointerEvent) => {
-      if (!attachMenuRef.current?.contains(event.target as Node)) setAttachMenuOpen(false);
+      if (!attachMenuRef.current?.contains(event.target as Node))
+        setAttachMenuOpen(false);
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -220,38 +299,121 @@ export default function ChatView({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, thinking]);
 
+  async function addFiles(fileList: FileList | null) {
+    const files = Array.from(fileList ?? []);
+    if (fileInputRef.current) fileInputRef.current.value = ""; // lets you re-pick the same file
+
+    for (const file of files) {
+      if (attachmentsRef.current.length >= MAX_ATTACHMENTS) {
+        showToast("error", `You can attach up to ${MAX_ATTACHMENTS} files.`);
+        break;
+      }
+      const used = attachmentsRef.current.reduce(
+        (n, a) => n + a.text.length,
+        0,
+      );
+      const room = MAX_DOC_CHARS - used;
+      if (room <= 0) {
+        showToast(
+          "error",
+          "No room left. The combined limit is 20,000 characters.",
+        );
+        break;
+      }
+      const isPdf =
+        file.type === "application/pdf" ||
+        file.name.toLowerCase().endsWith(".pdf");
+      if (isPdf && file.size > MAX_PDF_BYTES) {
+        showToast(
+          "error",
+          `${file.name} is too large. The PDF limit is 10 MB.`,
+        );
+        continue;
+      }
+
+      const id = crypto.randomUUID();
+      updateAttachments((prev) => [
+        ...prev,
+        {
+          id,
+          name: file.name,
+          kind: isPdf ? "pdf" : "text",
+          status: "loading",
+          text: "",
+          truncated: false,
+        },
+      ]);
+
+      try {
+        let raw: string;
+        let thumb: string | undefined;
+        try {
+          if (isPdf) ({ text: raw, thumb } = await readPdf(file));
+          else raw = await file.text();
+        } catch {
+          throw new Error(
+            isPdf
+              ? `Couldn't read ${file.name}.`
+              : `${file.name} doesn't look like text.`,
+          );
+        }
+        if (!raw.trim()) {
+          throw new Error(
+            isPdf
+              ? `No selectable text found in ${file.name}. It may be a scanned PDF.`
+              : `${file.name} is empty.`,
+          );
+        }
+        if (raw.includes("\0"))
+          throw new Error(`${file.name} doesn't look like text.`);
+
+        const truncated = raw.length > room;
+        const text = truncated ? raw.slice(0, room) : raw;
+        updateAttachments((prev) =>
+          prev.map((a) =>
+            a.id === id ? { ...a, status: "ready", text, truncated, thumb } : a,
+          ),
+        );
+      } catch (e) {
+        updateAttachments((prev) => prev.filter((a) => a.id !== id));
+        showToast(
+          "error",
+          e instanceof Error ? e.message : `Couldn't attach ${file.name}.`,
+        );
+      }
+    }
+  }
+
+  function removeAttachment(id: string) {
+    updateAttachments((prev) => prev.filter((a) => a.id !== id));
+  }
+
+  const anyLoading = attachments.some((a) => a.status === "loading");
+  const canSend =
+    !anyLoading && (input.trim().length > 0 || attachments.length > 0);
+
   function sendMessage() {
     const trimmed = input.trim();
-    if (!trimmed) return;
+    const ready = attachmentsRef.current.filter((a) => a.status === "ready");
+    if (anyLoading || (!trimmed && ready.length === 0)) return;
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
       showToast("error", "Not connected. Try refreshing the page.");
       return;
     }
-    wsRef.current.send(JSON.stringify({ content: trimmed }));
-    setInput("");
-  }
-
-  async function uploadFile(file: File | undefined) {
-    if (!file) return;
-    try {
-      const text = await file.text();
-      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-        showToast("error", "Not connected. Try refreshing the page.");
-      } else if (!text.trim()) {
-        showToast("error", "That file is empty.");
-      } else if (text.includes("\0")) {
-        showToast("error", "That file doesn't look like text.");
-      } else if (text.length > 20_000) {
-        showToast("error", "That file is too long. The limit is 20,000 characters.");
-      } else {
-        wsRef.current.send(JSON.stringify({ type: "share_document", title: file.name, content: text }));
-        showToast("success", `Shared ${file.name} with the session.`);
-      }
-    } catch {
-      showToast("error", "That file doesn't look like text.");
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = "";
+    for (const a of ready) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: "share_document",
+          title: a.truncated ? `${a.name} (truncated)` : a.name,
+          content: a.text,
+          kind: a.kind,
+          thumb: a.thumb,
+        }),
+      );
     }
+    if (trimmed) wsRef.current.send(JSON.stringify({ content: trimmed }));
+    setInput("");
+    updateAttachments(() => []);
   }
 
   return (
@@ -284,9 +446,21 @@ export default function ChatView({
       <div className="relative flex-1 overflow-y-auto w-full">
         <div className="chat-fog-edge chat-fog-top" aria-hidden="true" />
         <div className="max-w-2xl mx-auto px-6 py-6 space-y-5">
-          {messages.map((msg, i) => msg.type === "document_shared" ? (
-            <div key={i} className="text-center text-xs text-stone-400">{msg.shared_by} shared “{msg.title}”</div>
-          ) : <MessageRow key={i} msg={msg} isSelf={msg.author === displayName} />)}
+          {messages.map((msg, i) =>
+            msg.type === "document_shared" ? (
+              <SharedDocument
+                key={i}
+                msg={msg}
+                isSelf={msg.shared_by === displayName}
+              />
+            ) : (
+              <MessageRow
+                key={i}
+                msg={msg}
+                isSelf={msg.author === displayName}
+              />
+            ),
+          )}
           {thinking && (
             <div className="flex items-center gap-2 text-sm text-stone-400">
               <span className="font-medium text-stone-500">Talon</span>
@@ -307,55 +481,160 @@ export default function ChatView({
       <div className="chat-input-area px-6 py-4">
         <div className="chat-fog-input" aria-hidden="true" />
         <div className="relative z-10 max-w-2xl mx-auto">
-          <div ref={attachMenuRef} className="chat-composer relative flex items-center gap-1 rounded-2xl px-1 py-0.5 transition-colors">
-            <button
-              type="button"
-              ref={attachButtonRef}
-              aria-label="Add"
-              aria-haspopup="menu"
-              aria-expanded={attachMenuOpen}
-              onClick={() => setAttachMenuOpen((open) => !open)}
-              className="composer-btn no-inset flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-colors"
-            >
-              <Plus size={18} />
-            </button>
-
-            {attachMenuOpen && (
-              <div className="composer-menu" role="menu">
-                <button type="button" role="menuitem" className="composer-menu-item no-inset" ref={(node) => { menuItemsRef.current[0] = node; }}
-                  onKeyDown={(event) => {
-                    if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); menuItemsRef.current[1]?.focus(); }
-                  }}
-                  onClick={() => { setAttachMenuOpen(false); fileInputRef.current?.click(); }}>
-                  <Upload size={16} /><span>Upload from computer</span>
-                </button>
-                <button type="button" role="menuitem" className="composer-menu-item no-inset" ref={(node) => { menuItemsRef.current[1] = node; }}
-                  onKeyDown={(event) => {
-                    if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); menuItemsRef.current[0]?.focus(); }
-                  }}
-                  onClick={() => { setAttachMenuOpen(false); setRepoPanelOpen(true); }}>
-                  <GitCompareArrows size={16} /><span>Add from GitHub</span>
-                </button>
+          <div
+            ref={attachMenuRef}
+            className="chat-composer relative rounded-2xl px-1 py-0.5 transition-colors"
+          >
+            {attachments.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto px-2 pt-2 pb-1">
+                {attachments.map((a) => {
+                  const label =
+                    a.kind === "pdf"
+                      ? "PDF"
+                      : (a.name.split(".").pop() ?? "FILE")
+                          .slice(0, 4)
+                          .toUpperCase();
+                  return (
+                    <div
+                      key={a.id}
+                      className="attachment-tile group relative h-28 w-24 shrink-0 overflow-hidden rounded-lg"
+                      title={
+                        a.truncated ? `${a.name} (truncated to fit)` : a.name
+                      }
+                    >
+                      {a.thumb ? (
+                        <img
+                          src={a.thumb}
+                          alt=""
+                          className="h-full w-full object-cover object-top"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 px-2 text-center">
+                          <FileText size={22} />
+                          <span className="line-clamp-2 break-all text-[10px] leading-tight">
+                            {a.name}
+                          </span>
+                        </div>
+                      )}
+                      <span className="attachment-badge absolute bottom-1 left-1 rounded px-1.5 py-0.5 text-[10px] font-semibold">
+                        {label}
+                      </span>
+                      {a.truncated && (
+                        <span className="attachment-badge absolute bottom-1 right-1 rounded px-1.5 py-0.5 text-[10px] font-semibold">
+                          Truncated
+                        </span>
+                      )}
+                      {a.status === "loading" && (
+                        <div className="attachment-loading absolute inset-0 flex items-center justify-center">
+                          <Loader2 size={18} className="animate-spin" />
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeAttachment(a.id)}
+                        aria-label={`Remove ${a.name}`}
+                        className="attachment-remove no-inset absolute right-1 top-1 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
-            <input ref={fileInputRef} type="file" hidden accept=".txt,.md,.markdown,.csv,.json,.yml,.yaml,.toml,.xml,.html,.css,.js,.jsx,.ts,.tsx,.py,.sql,.sh,.log" onChange={(event) => void uploadFile(event.target.files?.[0])} />
 
-            <input
-              className="min-w-0 flex-1 border-none bg-transparent px-2 py-2 text-base text-stone-800 outline-none placeholder:text-stone-400"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              placeholder="Write a message…"
-            />
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                ref={attachButtonRef}
+                aria-label="Add"
+                aria-haspopup="menu"
+                aria-expanded={attachMenuOpen}
+                onClick={() => setAttachMenuOpen((open) => !open)}
+                className="composer-btn no-inset flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-colors"
+              >
+                <Plus size={18} />
+              </button>
 
-            <button
-              onClick={sendMessage}
-              disabled={!input.trim()}
-              aria-label="Send"
-              className="composer-send  no-inset flex h-9 w-9 shrink-0 cursor-pointer hover:bg-stone-200 items-center justify-center rounded-xl transition-opacity disabled:cursor-default disabled:opacity-40"
-            >
-              <CornerDownLeft size={16} />
-            </button>
+              {attachMenuOpen && (
+                <div className="composer-menu" role="menu">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="composer-menu-item no-inset"
+                    ref={(node) => {
+                      menuItemsRef.current[0] = node;
+                    }}
+                    onKeyDown={(event) => {
+                      if (
+                        event.key === "ArrowDown" ||
+                        event.key === "ArrowUp"
+                      ) {
+                        event.preventDefault();
+                        menuItemsRef.current[1]?.focus();
+                      }
+                    }}
+                    onClick={() => {
+                      setAttachMenuOpen(false);
+                      fileInputRef.current?.click();
+                    }}
+                  >
+                    <Upload size={16} />
+                    <span>Upload from computer</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="composer-menu-item no-inset"
+                    ref={(node) => {
+                      menuItemsRef.current[1] = node;
+                    }}
+                    onKeyDown={(event) => {
+                      if (
+                        event.key === "ArrowDown" ||
+                        event.key === "ArrowUp"
+                      ) {
+                        event.preventDefault();
+                        menuItemsRef.current[0]?.focus();
+                      }
+                    }}
+                    onClick={() => {
+                      setAttachMenuOpen(false);
+                      setRepoPanelOpen(true);
+                    }}
+                  >
+                    <GitCompareArrows size={16} />
+                    <span>Add from GitHub</span>
+                  </button>
+                </div>
+              )}
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                hidden
+                multiple
+                accept=".pdf,.txt,.md,.markdown,.csv,.json,.yml,.yaml,.toml,.xml,.html,.css,.js,.jsx,.ts,.tsx,.py,.sql,.sh,.log"
+                onChange={(event) => void addFiles(event.target.files)}
+              />
+
+              <input
+                className="min-w-0 flex-1 border-none bg-transparent px-2 py-2 text-base text-stone-800 outline-none placeholder:text-stone-400"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                placeholder="Write a message…"
+              />
+
+              <button
+                onClick={sendMessage}
+                disabled={!canSend}
+                aria-label="Send"
+                className="composer-send no-inset flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-opacity hover:bg-stone-200 disabled:cursor-default disabled:opacity-40"
+              >
+                <CornerDownLeft size={16} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -378,7 +657,6 @@ export default function ChatView({
 
 const markdownComponents = {
   pre({ children }: any) {
-    // Mermaid diagrams render their own container, so don't wrap them
     const child: any = Array.isArray(children) ? children[0] : children;
     if (/language-mermaid/.test(child?.props?.className || ""))
       return <>{children}</>;
@@ -463,6 +741,34 @@ function MessageRow({ msg, isSelf }: { msg: ChatMessage; isSelf: boolean }) {
           {msg.content}
         </ReactMarkdown>
       </div>
+    </div>
+  );
+}
+function SharedDocument({ msg, isSelf }: { msg: ChatMessage; isSelf: boolean }) {
+  const title = msg.title ?? "Document";
+  const base = title.replace(/ \(truncated\)$/, "");
+  const label = msg.kind === "pdf" ? "PDF" : (base.split(".").pop() ?? "FILE").slice(0, 4).toUpperCase();
+  return (
+    <div className={`flex flex-col gap-1 ${isSelf ? "items-end" : "items-start"}`}>
+      {!isSelf && (
+        <span className={`text-sm font-medium ${colorForAuthor(msg.shared_by ?? "").text}`}>
+          {msg.shared_by}
+        </span>
+      )}
+      <div className="attachment-tile relative h-28 w-24 overflow-hidden rounded-lg" title={title}>
+        {msg.thumb ? (
+          <img src={msg.thumb} alt={`Preview of ${base}`} className="h-full w-full object-cover object-top" />
+        ) : (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 px-2 text-center">
+            <FileText size={22} />
+            <span className="line-clamp-2 break-all text-[10px] leading-tight">{base}</span>
+          </div>
+        )}
+        <span className="attachment-badge absolute bottom-1 left-1 rounded px-1.5 py-0.5 text-[10px] font-semibold">
+          {label}
+        </span>
+      </div>
+      <span className="max-w-48 truncate text-xs text-stone-400">{title}</span>
     </div>
   );
 }
