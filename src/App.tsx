@@ -305,16 +305,16 @@ function App() {
 
   return (
     <div className="flex h-screen w-screen bg-white  text-stone-800 ">
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/30 z-30 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      <div
+        className={`fixed inset-0 z-30 bg-black/30 transition-opacity duration-200 ease-out motion-reduce:transition-none md:hidden ${sidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"}`}
+        aria-hidden="true"
+        onClick={() => setSidebarOpen(false)}
+      />
       <aside
+        id="session-sidebar"
         className={`fixed md:static inset-y-0 left-0 z-40 w-64 ${
           sidebarCollapsed ? "md:w-12" : "md:w-64"
-        } bg-stone-50 border-r border-stone-200 flex flex-col transform transition-transform duration-200 ${
+        } bg-stone-50 border-r border-stone-200 flex flex-col transform transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
@@ -337,7 +337,7 @@ function App() {
                 disabled={!prevSession}
                 aria-label="Previous session"
                 title="Previous session"
-                className="composer-btn no-inset flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors disabled:pointer-events-none disabled:opacity-40"
+                className="button-press composer-btn no-inset flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors disabled:pointer-events-none disabled:opacity-40"
               >
                 <ChevronUp size={16} />
               </button>
@@ -346,7 +346,7 @@ function App() {
                 disabled={!nextSession}
                 aria-label="Next session"
                 title="Next session"
-                className="composer-btn no-inset flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors disabled:pointer-events-none disabled:opacity-40"
+                className="button-press composer-btn no-inset flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors disabled:pointer-events-none disabled:opacity-40"
               >
                 <ChevronDown size={16} />
               </button>
@@ -357,7 +357,7 @@ function App() {
             <button
               onClick={handleCreateSession}
               disabled={creating}
-              className="no-inset w-full flex items-center gap-2 rounded-lg cursor-pointer px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-200 transition-colors disabled:opacity-50"
+              className="button-press no-inset w-full flex items-center gap-2 rounded-lg cursor-pointer px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-200 transition-colors disabled:opacity-50"
             >
               <div className="text-lg leading-none bg-stone-100 rounded-xl px-1 py-0.5 flex justify-center items-center">
                 +
@@ -378,16 +378,22 @@ function App() {
             {sessions.map((s) => (
               <div
                 key={s.id}
-                onClick={() => openSession(s.id)}
-                className={`group flex items-center justify-between px-3 py-2 rounded-lg dark:hover:bg-stone-500 text-sm truncate transition-colors cursor-pointer ${
+                className={`group flex items-center justify-between rounded-lg text-sm transition-colors ${
                   activeSessionId === s.id
                     ? "bg-stone-200 text-stone-900"
                     : "text-stone-600 hover:bg-stone-100"
                 }`}
               >
-                <span className="truncate flex-1 font-medium text-[14px]">
-                  {s.title || "Untitled session"}
-                </span>
+                <button
+                  type="button"
+                  onClick={() => openSession(s.id)}
+                  aria-current={activeSessionId === s.id ? "page" : undefined}
+                  className="no-inset min-w-0 flex-1 rounded-lg px-3 py-2 text-left text-[14px] font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-stone-500"
+                >
+                  <span className="block truncate">
+                    {s.title || "Untitled session"}
+                  </span>
+                </button>
                 <SessionMenu
                   sessionId={s.id}
                   currentTitle={s.title || ""}
@@ -461,6 +467,10 @@ function App() {
         <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-stone-200">
           <button
             onClick={() => setSidebarOpen(true)}
+            aria-label="Open sessions sidebar"
+            aria-expanded={sidebarOpen}
+            aria-controls="session-sidebar"
+            type="button"
             className="text-stone-600"
           >
             <Menu size={20} />
@@ -500,7 +510,7 @@ function App() {
               <button
                 onClick={handleCreateSession}
                 disabled={creating}
-                className="new-session-button  rounded-lg px-5 py-2.5 text-sm cursor-pointer font-medium hover:bg-stone-900 transition-colors disabled:opacity-50"
+                className="button-press new-session-button rounded-lg px-5 py-2.5 text-sm cursor-pointer font-medium hover:bg-stone-900 transition-colors disabled:opacity-50"
               >
                 {creating ? "Creating…" : "New session"}
               </button>
