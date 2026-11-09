@@ -167,6 +167,8 @@ export default function ChatView({
   const menuItemsRef = useRef<Array<HTMLButtonElement | null>>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const nearBottomRef = useRef(true);
+  const [showJumpToLatest, setShowJumpToLatest] = useState(false);
   const MIN_STATUS_MS = 800;
   const statusShownAt = useRef(0);
   const statusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -201,6 +203,8 @@ export default function ChatView({
 
   useEffect(() => {
     setMessages([]);
+    nearBottomRef.current = true;
+    setShowJumpToLatest(false);
     setThinking(false);
     setStatusLabel(null);
     setMemorySaving(false);
@@ -296,7 +300,11 @@ export default function ChatView({
   }, [sessionId]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (nearBottomRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      setShowJumpToLatest(true);
+    }
   }, [messages, thinking]);
 
   async function addFiles(fileList: FileList | null) {
@@ -443,7 +451,15 @@ export default function ChatView({
         </div>
       </header>
 
-      <div className="relative flex-1 overflow-y-auto w-full">
+      <div
+        className="relative flex-1 overflow-y-auto w-full"
+        onScroll={(event) => {
+          const element = event.currentTarget;
+          nearBottomRef.current =
+            element.scrollHeight - element.scrollTop - element.clientHeight < 80;
+          if (nearBottomRef.current) setShowJumpToLatest(false);
+        }}
+      >
         <div className="chat-fog-edge chat-fog-top" aria-hidden="true" />
         <div className="max-w-2xl mx-auto px-6 py-6 space-y-5">
           {messages.map((msg, i) =>
@@ -476,6 +492,19 @@ export default function ChatView({
           )}
           <div ref={bottomRef} />
         </div>
+        {showJumpToLatest && (
+          <button
+            type="button"
+            onClick={() => {
+              nearBottomRef.current = true;
+              setShowJumpToLatest(false);
+              bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+            }}
+            className="no-inset absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-stone-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100"
+          >
+            Jump to latest
+          </button>
+        )}
       </div>
 
       <div className="chat-input-area px-6 py-4">
@@ -551,7 +580,7 @@ export default function ChatView({
                 aria-haspopup="menu"
                 aria-expanded={attachMenuOpen}
                 onClick={() => setAttachMenuOpen((open) => !open)}
-                className="composer-btn no-inset flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-colors"
+                className="button-press composer-btn no-inset flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-colors"
               >
                 <Plus size={18} />
               </button>
@@ -630,7 +659,7 @@ export default function ChatView({
                 onClick={sendMessage}
                 disabled={!canSend}
                 aria-label="Send"
-                className="composer-send no-inset flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-opacity hover:bg-stone-200 disabled:cursor-default disabled:opacity-40"
+                className="button-press composer-send no-inset flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-opacity hover:bg-stone-200 disabled:cursor-default disabled:opacity-40"
               >
                 <CornerDownLeft size={16} />
               </button>
