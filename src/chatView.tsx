@@ -92,27 +92,27 @@ async function readPdf(file: File): Promise<{ text: string; thumb?: string }> {
   };
 }
 
-async function extractPdfText(file: File): Promise<string> {
-  const pdfjs = await import("pdfjs-dist");
-  pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
-  const data = new Uint8Array(await file.arrayBuffer());
-  const pdf = await pdfjs.getDocument({ data }).promise;
-  const pages: string[] = [];
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const content = await (await pdf.getPage(i)).getTextContent();
-    pages.push(
-      content.items
-        .map((it: any) =>
-          "str" in it ? it.str + (it.hasEOL ? "\n" : " ") : "",
-        )
-        .join(""),
-    );
-  }
-  return pages
-    .join("\n\n")
-    .replace(/[ \t]+\n/g, "\n")
-    .trim();
-}
+// async function extractPdfText(file: File): Promise<string> {
+//   const pdfjs = await import("pdfjs-dist");
+//   pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+//   const data = new Uint8Array(await file.arrayBuffer());
+//   const pdf = await pdfjs.getDocument({ data }).promise;
+//   const pages: string[] = [];
+//   for (let i = 1; i <= pdf.numPages; i++) {
+//     const content = await (await pdf.getPage(i)).getTextContent();
+//     pages.push(
+//       content.items
+//         .map((it: any) =>
+//           "str" in it ? it.str + (it.hasEOL ? "\n" : " ") : "",
+//         )
+//         .join(""),
+//     );
+//   }
+//   return pages
+//     .join("\n\n")
+//     .replace(/[ \t]+\n/g, "\n")
+//     .trim();
+// }
 
 const PARTICIPANT_COLORS = [
   { text: "text-emerald-700", bg: "bg-emerald-700" },
@@ -440,7 +440,7 @@ export default function ChatView({
             aria-label="Code repositories"
             className="no-inset outline-none border-none cursor-pointer"
           >
-            <GitCompareArrows size={16} />
+          
           </button>
           <button
             onClick={() => setInviteModalOpen(true)}
@@ -500,7 +500,7 @@ export default function ChatView({
               setShowJumpToLatest(false);
               bottomRef.current?.scrollIntoView({ behavior: "smooth" });
             }}
-            className="no-inset absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-stone-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100"
+            className="no-inset absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 shadow-md  focus-visible:outline-2 focus-visible:outline-stone-500 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100"
           >
             Jump to latest
           </button>
