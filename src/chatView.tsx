@@ -45,6 +45,14 @@ type Attachment = {
   thumb?: string;
 };
 
+const PARTICIPANT_COLORS = [
+  { text: "text-emerald-700", bg: "bg-emerald-700", bubble: "bg-emerald-100 text-emerald-900" },
+  { text: "text-amber-700",   bg: "bg-amber-700",   bubble: "bg-amber-100 text-amber-900" },
+  { text: "text-rose-700",    bg: "bg-rose-700",    bubble: "bg-rose-100 text-rose-900" },
+  { text: "text-violet-700",  bg: "bg-violet-700",  bubble: "bg-violet-100 text-violet-900" },
+  { text: "text-cyan-700",    bg: "bg-cyan-700",    bubble: "bg-cyan-100 text-cyan-900" },
+];
+
 const MAX_DOC_CHARS = 20_000;
 const MAX_PDF_BYTES = 10 * 1024 * 1024;
 const MAX_ATTACHMENTS = 3;
@@ -114,13 +122,7 @@ async function readPdf(file: File): Promise<{ text: string; thumb?: string }> {
 //     .trim();
 // }
 
-const PARTICIPANT_COLORS = [
-  { text: "text-emerald-700", bg: "bg-emerald-700" },
-  { text: "text-amber-700", bg: "bg-amber-700" },
-  { text: "text-rose-700", bg: "bg-rose-700" },
-  { text: "text-violet-700", bg: "bg-violet-700" },
-  { text: "text-cyan-700", bg: "bg-cyan-700" },
-];
+
 
 function colorForAuthor(name: string) {
   let hash = 0;
@@ -744,14 +746,16 @@ function MessageRow({ msg, isSelf }: { msg: ChatMessage; isSelf: boolean }) {
   const isTalon = msg.author === "Talon";
 
   if (isSelf) {
-    return (
-      <div className="flex justify-end">
-        <div className="max-w-lg rounded-2xl bg-stone-100 px-4 py-2.5 text-sm text-stone-800 dark:bg-black dark:text-white">
-          {msg.content}
-        </div>
+  return (
+    <div className="flex justify-end">
+      <div
+        className={`max-w-lg rounded-2xl rounded-br-md px-4 py-2.5 text-sm ${colorForAuthor(msg.author ?? "").bubble}`}
+      >
+        {msg.content}
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div className="flex flex-col gap-1">
