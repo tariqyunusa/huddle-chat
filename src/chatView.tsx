@@ -46,11 +46,31 @@ type Attachment = {
 };
 
 const PARTICIPANT_COLORS = [
-  { text: "text-emerald-700", bg: "bg-emerald-700", bubble: "bg-emerald-100 text-emerald-900" },
-  { text: "text-amber-700",   bg: "bg-amber-700",   bubble: "bg-amber-100 text-amber-900" },
-  { text: "text-rose-700",    bg: "bg-rose-700",    bubble: "bg-rose-100 text-rose-900" },
-  { text: "text-violet-700",  bg: "bg-violet-700",  bubble: "bg-violet-100 text-violet-900" },
-  { text: "text-cyan-700",    bg: "bg-cyan-700",    bubble: "bg-cyan-100 text-cyan-900" },
+  {
+    text: "text-emerald-700",
+    bg: "bg-emerald-700",
+    bubble: "bg-emerald-100 text-emerald-900",
+  },
+  {
+    text: "text-amber-700",
+    bg: "bg-amber-700",
+    bubble: "bg-amber-100 text-amber-900",
+  },
+  {
+    text: "text-rose-700",
+    bg: "bg-rose-700",
+    bubble: "bg-rose-100 text-rose-900",
+  },
+  {
+    text: "text-violet-700",
+    bg: "bg-violet-700",
+    bubble: "bg-violet-100 text-violet-900",
+  },
+  {
+    text: "text-cyan-700",
+    bg: "bg-cyan-700",
+    bubble: "bg-cyan-100 text-cyan-900",
+  },
 ];
 
 const MAX_DOC_CHARS = 20_000;
@@ -121,8 +141,6 @@ async function readPdf(file: File): Promise<{ text: string; thumb?: string }> {
 //     .replace(/[ \t]+\n/g, "\n")
 //     .trim();
 // }
-
-
 
 function colorForAuthor(name: string) {
   let hash = 0;
@@ -441,9 +459,7 @@ export default function ChatView({
             title="Code repositories"
             aria-label="Code repositories"
             className="no-inset outline-none border-none cursor-pointer"
-          >
-          
-          </button>
+          ></button>
           <button
             onClick={() => setInviteModalOpen(true)}
             className="no-inset outline-none border-none cursor-pointer"
@@ -458,7 +474,8 @@ export default function ChatView({
         onScroll={(event) => {
           const element = event.currentTarget;
           nearBottomRef.current =
-            element.scrollHeight - element.scrollTop - element.clientHeight < 80;
+            element.scrollHeight - element.scrollTop - element.clientHeight <
+            80;
           if (nearBottomRef.current) setShowJumpToLatest(false);
         }}
       >
@@ -746,12 +763,28 @@ function MessageRow({ msg, isSelf }: { msg: ChatMessage; isSelf: boolean }) {
   const isTalon = msg.author === "Talon";
 
   if (isSelf) {
+    return (
+      <div className="flex justify-end items-end gap-2">
+        <div
+          className={`max-w-lg rounded-2xl rounded-br-md px-4 py-2.5 text-sm ${colorForAuthor(msg.author ?? "").bubble}`}
+        >
+          {msg.content}
+        </div>
+        <Avatar name={msg.author ?? ""} />
+      </div>
+    );
+  }
+
+  if (!isTalon) {
+  const color = colorForAuthor(msg.author ?? "");
   return (
-    <div className="flex justify-end">
-      <div
-        className={`max-w-lg rounded-2xl rounded-br-md px-4 py-2.5 text-sm ${colorForAuthor(msg.author ?? "").bubble}`}
-      >
-        {msg.content}
+    <div className="flex items-end gap-2">
+      <Avatar name={msg.author ?? ""} />
+      <div className="flex max-w-lg flex-col gap-1">
+        <span className={`text-xs font-medium ${color.text}`}>{msg.author}</span>
+        <div className={`rounded-2xl rounded-bl-md px-4 py-2.5 text-sm ${color.bubble}`}>
+          {msg.content}
+        </div>
       </div>
     </div>
   );
@@ -777,24 +810,46 @@ function MessageRow({ msg, isSelf }: { msg: ChatMessage; isSelf: boolean }) {
     </div>
   );
 }
-function SharedDocument({ msg, isSelf }: { msg: ChatMessage; isSelf: boolean }) {
+function SharedDocument({
+  msg,
+  isSelf,
+}: {
+  msg: ChatMessage;
+  isSelf: boolean;
+}) {
   const title = msg.title ?? "Document";
   const base = title.replace(/ \(truncated\)$/, "");
-  const label = msg.kind === "pdf" ? "PDF" : (base.split(".").pop() ?? "FILE").slice(0, 4).toUpperCase();
+  const label =
+    msg.kind === "pdf"
+      ? "PDF"
+      : (base.split(".").pop() ?? "FILE").slice(0, 4).toUpperCase();
   return (
-    <div className={`flex flex-col gap-1 ${isSelf ? "items-end" : "items-start"}`}>
+    <div
+      className={`flex flex-col gap-1 ${isSelf ? "items-end" : "items-start"}`}
+    >
       {!isSelf && (
-        <span className={`text-sm font-medium ${colorForAuthor(msg.shared_by ?? "").text}`}>
+        <span
+          className={`text-sm font-medium ${colorForAuthor(msg.shared_by ?? "").text}`}
+        >
           {msg.shared_by}
         </span>
       )}
-      <div className="attachment-tile relative h-28 w-24 overflow-hidden rounded-lg" title={title}>
+      <div
+        className="attachment-tile relative h-28 w-24 overflow-hidden rounded-lg"
+        title={title}
+      >
         {msg.thumb ? (
-          <img src={msg.thumb} alt={`Preview of ${base}`} className="h-full w-full object-cover object-top" />
+          <img
+            src={msg.thumb}
+            alt={`Preview of ${base}`}
+            className="h-full w-full object-cover object-top"
+          />
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 px-2 text-center">
             <FileText size={22} />
-            <span className="line-clamp-2 break-all text-[10px] leading-tight">{base}</span>
+            <span className="line-clamp-2 break-all text-[10px] leading-tight">
+              {base}
+            </span>
           </div>
         )}
         <span className="attachment-badge absolute bottom-1 left-1 rounded px-1.5 py-0.5 text-[10px] font-semibold">
