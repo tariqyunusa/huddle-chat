@@ -8,7 +8,7 @@ import {
   putProcedure,
   type MemoryDoc,
 } from "./api";
-import { Pencil, Trash2 } from "lucide-react";
+import { BookOpen, Brain, Pencil, Sparkles, Trash2 } from "lucide-react";
 
 type Draft = { name: string; description: string; content: string };
 type Editor = {
@@ -154,7 +154,7 @@ function MemoryDocRow({
           if (confirmDelete) onCancelDelete();
           else onEdit();
         }}
-        className="group grid cursor-pointer grid-cols-[minmax(0,220px)_minmax(0,1fr)_auto] items-center gap-3 px-2 py-4 text-left transition-colors  max-sm:grid-cols-[minmax(0,120px)_minmax(0,1fr)_auto] max-sm:gap-2"
+        className="group grid cursor-pointer grid-cols-[minmax(0,220px)_minmax(0,1fr)_auto] items-center gap-3 border-b border-stone-100 px-4 py-4 text-left transition-colors last:border-b-0 hover:bg-stone-50/80 focus-within:bg-stone-50/80 max-sm:grid-cols-[minmax(0,120px)_minmax(0,1fr)_auto] max-sm:gap-2 dark:border-stone-800 dark:hover:bg-stone-800/40 dark:focus-within:bg-stone-800/40"
       >
         <span className="truncate text-sm font-medium text-stone-800 dark:text-stone-100">{humanizedTitle(doc.path)}</span>
         <span className="truncate text-sm text-stone-500 dark:text-stone-400">{doc.description}</span>
@@ -167,10 +167,10 @@ function MemoryDocRow({
               {deletePending ? <span aria-label="Deleting" className="inline-block size-4 animate-spin rounded-full border-2 border-current border-r-transparent align-middle" /> : "Delete"}
             </button>
           </div> : <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
-            <button id={`memory-edit-${doc.id}`} type="button" disabled={deletePending || exiting} aria-label={`Edit ${humanizedTitle(doc.path)}`} aria-expanded={open} aria-controls={`memory-panel-${doc.id}`} onClick={onEdit} className="flex items-center cursor-pointer gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-stone-600 opacity-0 no-inset transition-opacity hover:bg-stone-100  group-hover:opacity-100  focus-visible:opacity-100 disabled:cursor-not-allowed [@media(hover:none)]:opacity-100 dark:text-stone-300 dark:hover:bg-gray-700">
+            <button id={`memory-edit-${doc.id}`} type="button" disabled={deletePending || exiting} aria-label={`Edit ${humanizedTitle(doc.path)}`} aria-expanded={open} aria-controls={`memory-panel-${doc.id}`} onClick={onEdit} className="flex items-center cursor-pointer gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-stone-600 opacity-70 no-inset transition-[opacity,background-color,transform] duration-150 hover:bg-stone-100 hover:opacity-100 active:scale-[0.97] group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 disabled:cursor-not-allowed dark:text-stone-300 dark:hover:bg-gray-700">
               <Pencil size={14} aria-hidden="true" />
             </button>
-            <button type="button" aria-label={`Delete ${humanizedTitle(doc.path)}`} disabled={deletePending || exiting} onClick={onDeleteAsk} className="rounded-lg p-1.5 text-stone-500 opacity-0 transition-opacity no-inset cursor-pointer hover:bg-rose-50 hover:text-rose-700 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 disabled:cursor-not-allowed [@media(hover:none)]:opacity-100 dark:text-stone-400 dark:hover:bg-rose-950 dark:hover:text-rose-300">
+            <button type="button" aria-label={`Delete ${humanizedTitle(doc.path)}`} disabled={deletePending || exiting} onClick={onDeleteAsk} className="rounded-lg p-1.5 text-stone-500 opacity-60 transition-[opacity,background-color,transform] duration-150 no-inset cursor-pointer hover:bg-rose-50 hover:text-rose-700 hover:opacity-100 active:scale-[0.97] group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 disabled:cursor-not-allowed dark:text-stone-400 dark:hover:bg-rose-950 dark:hover:text-rose-300">
               <Trash2 size={15} aria-hidden="true" />
             </button>
           </div>}
@@ -280,7 +280,7 @@ function MemoryList({ docs, editor, savedId, reducedMotion, confirmDeleteId, del
   }
   */
 
-  const groupNames = [...docs.map((doc) => groupForPath(doc.path))];
+  const groupNames = [...docs.map((doc) => doc.kind === "procedural" ? "Instructions" : groupForPath(doc.path))];
   const groups = Array.from(new Set(groupNames)).sort((a, b) => groupOrder(a) - groupOrder(b) || a.localeCompare(b));
 
   function renderRows(rows: MemoryDoc[]) {
@@ -288,12 +288,14 @@ function MemoryList({ docs, editor, savedId, reducedMotion, confirmDeleteId, del
   }
 
   return <div className="space-y-6">
-    {docs.length === 0 ? <p className="rounded-xl border border-stone-200 bg-stone-50 px-5 py-4 text-sm text-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-400">Nothing saved yet. Talon saves facts you state and instructions you add.</p> : null}
+    {docs.length === 0 ? <div className="rounded-2xl border border-stone-200 bg-gradient-to-br from-stone-50 to-white p-6 dark:border-stone-700 dark:from-stone-900 dark:to-stone-950"><div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-white text-stone-600 shadow-sm dark:bg-stone-800 dark:text-stone-200"><Sparkles size={18} /></div><h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100">Your memory is ready to grow</h3><p className="mt-1 max-w-lg text-sm leading-6 text-stone-500 dark:text-stone-400">As you share useful details in sessions, Talon can remember them here. Memories are only used when you’re the one speaking.</p></div> : null}
     {groups.map((group) => {
-      const rows = docs.filter((doc) => groupForPath(doc.path) === group);
+      const rows = docs.filter((doc) => (doc.kind === "procedural" ? "Instructions" : groupForPath(doc.path)) === group);
+      const Icon = group === "Instructions" ? BookOpen : Brain;
       return <section key={group}>
-    <div className="flex items-center justify-between gap-3 border-b border-stone-200 pb-3 dark:border-stone-700">
-      <h3 className="text-base font-semibold text-stone-800 dark:text-stone-100">{group}</h3>
+    <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3"><div className="flex size-9 items-center justify-center rounded-xl border border-stone-200 bg-white text-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300"><Icon size={17} /></div><div><h3 className="text-sm font-semibold text-stone-900 dark:text-stone-100">{group}</h3><p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">{group === "Instructions" ? "Preferences for how Talon should help" : "Details Talon remembers about you"}</p></div></div>
+      <span className="rounded-full bg-stone-100 px-2.5 py-1 text-xs font-medium tabular-nums text-stone-600 dark:bg-stone-800 dark:text-stone-300">{rows.length}</span>
       {/* Disabled for now; re-enable when instruction creation returns.
       {group === "Instructions" && <button type="button" onClick={beginCreate} disabled={maxed || Boolean(editor) || creating} title={maxed ? "You can have up to 5 instructions." : undefined} className="rounded-xl bg-stone-800 px-3 py-2 text-sm font-medium cursor-pointer no-inset text-white hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-45 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white">New instruction</button>}
       */}
@@ -311,7 +313,7 @@ function MemoryList({ docs, editor, savedId, reducedMotion, confirmDeleteId, del
       <div className="flex gap-2"><button type="button" disabled={createInvalid || createBusy} onClick={() => void submitCreate()} className="rounded-lg bg-stone-800 px-3 py-2 text-sm font-medium text-white disabled:opacity-45 dark:bg-stone-100 dark:text-stone-900">{createBusy ? "Saving…" : "Save"}</button><button type="button" onClick={onCreateCancel} className="rounded-lg px-3 py-2 text-sm text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800">Cancel</button></div>
     </div>}
     */}
-    {renderRows(rows)}
+    <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">{renderRows(rows)}</div>
       </section>;
     })}
     {/* Disabled for now; re-enable when instruction creation returns.
@@ -519,8 +521,8 @@ export default function MemorySettings({ onDirtyChange }: { onDirtyChange?: (dir
     void retryRef.current();
   }
 
-  return <div className="space-y-8">
-    <p className="max-w-2xl text-sm leading-6 text-stone-500 dark:text-stone-400">Facts come from things you say in sessions and are only used when you are the one speaking.</p>
+  return <div className="space-y-7">
+    <div className="rounded-2xl border border-stone-200 bg-gradient-to-br from-stone-50 via-white to-white p-5 sm:p-6 dark:border-stone-700 dark:from-stone-900 dark:via-stone-950 dark:to-stone-950"><div className="flex items-start gap-4"><div className="hidden size-11 shrink-0 items-center justify-center rounded-2xl bg-stone-900 text-white sm:flex dark:bg-stone-100 dark:text-stone-900"><Brain size={21} /></div><div className="min-w-0"><div className="flex items-center gap-2"><h3 className="text-base font-semibold tracking-tight text-stone-900 dark:text-stone-100">A little context, just for you</h3><Sparkles size={15} className="text-amber-500" aria-hidden="true" /></div><p className="mt-1 max-w-2xl text-sm leading-6 text-stone-500 dark:text-stone-400">Review and edit what Talon remembers from your sessions. Your memories are only used when you’re the one speaking.</p></div></div><div className="mt-5 flex flex-wrap gap-2"><span className="rounded-full border border-stone-200 bg-white/80 px-3 py-1.5 text-xs font-medium text-stone-600 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300">{semanticDocs.length} {semanticDocs.length === 1 ? "fact" : "facts"}</span><span className="rounded-full border border-stone-200 bg-white/80 px-3 py-1.5 text-xs font-medium text-stone-600 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300">{proceduralDocs.length} {proceduralDocs.length === 1 ? "instruction" : "instructions"}</span></div></div>
     {loading ? <LoadingState /> : error ? <div role="alert" className="rounded-xl border border-stone-200 bg-stone-50 p-5 dark:border-stone-700 dark:bg-stone-900"><p className="text-sm text-stone-600 dark:text-stone-300">{error}</p><button onClick={() => void loadMemory()} className="mt-3 rounded-lg px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200 dark:text-stone-200 dark:hover:bg-stone-800">Retry</button></div> : <MemoryList
       docs={[...semanticDocs, ...proceduralDocs]}
       editor={editor}
