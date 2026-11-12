@@ -186,7 +186,9 @@ function MemoryDocRow({
         inert={!open}
       >
         <div className="min-h-0 overflow-hidden">
-          {editing && editor ? <div className="px-3 pb-5 pt-2 sm:px-5" onKeyDown={onKeyDown}>
+          {editing && editor ? <div className="px-3 pb-4 sm:px-4" onKeyDown={onKeyDown}>
+        <div className="space-y-5 rounded-xl border border-stone-200 bg-stone-50/70 p-4 sm:p-5 dark:border-stone-700 dark:bg-stone-950/70">
+          <div className="flex items-start justify-between gap-3 border-b border-stone-200 pb-4 dark:border-stone-800"><div><p className="text-sm font-semibold text-stone-900 dark:text-stone-100">{mode === "semantic" ? "Your saved facts" : "Your instruction"}</p><p className="mt-1 text-xs leading-5 text-stone-500 dark:text-stone-400">{mode === "semantic" ? "Keep these details accurate. Talon may add new facts over time." : "Shape how Talon should respond when this instruction applies."}</p></div><span className="shrink-0 rounded-full border border-stone-200 bg-white px-2.5 py-1 text-[11px] font-medium text-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-400">Editing</span></div>
         <div className="space-y-4">
           {mode === "procedural" ? <>
             <EditorField label="Name">
@@ -202,13 +204,13 @@ function MemoryDocRow({
           </> : <>
             <p className="text-sm font-medium text-stone-800 dark:text-stone-100">{doc.path}</p>
             <EditorField label="Facts, one per line">
-              <textarea ref={firstField as React.RefObject<HTMLTextAreaElement>} value={editor.draft.content} onChange={(event) => onDraft({ content: event.target.value })} rows={5} className="mt-1 block w-full resize-y rounded-lg  bg-gray-50 px-3 py-2 text-sm leading-6 text-stone-800 outline-none  dark:bg-gray-300 dark:text-stone-100" />
+              <textarea ref={firstField as React.RefObject<HTMLTextAreaElement>} value={editor.draft.content} onChange={(event) => onDraft({ content: event.target.value })} rows={5} className="mt-2 block w-full resize-y rounded-xl border border-stone-200 bg-white px-3.5 py-3 text-sm leading-6 text-stone-800 outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-200/70 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:focus:border-stone-500 dark:focus:ring-stone-700/60" />
             </EditorField>
             <p className="text-xs text-stone-500 dark:text-stone-400">Talon may add to this over time.</p>
             {!editor.draft.content.trim() && <button type="button" onClick={onDeleteAsk} className="text-left text-sm font-medium text-red-700 underline dark:text-red-300">Delete this document instead?</button>}
           </>}
           {mode === "procedural" ? <EditorField label="Instruction">
-            <textarea value={editor.draft.content} onChange={(event) => onDraft({ content: event.target.value })} maxLength={4000} rows={5} className="mt-1 block w-full resize-y rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm leading-6 text-stone-800 outline-none focus:border-stone-500 dark:border-stone-600 dark:bg-stone-950 dark:text-stone-100" />
+              <textarea value={editor.draft.content} onChange={(event) => onDraft({ content: event.target.value })} maxLength={4000} rows={5} className="mt-2 block w-full resize-y rounded-xl border border-stone-200 bg-white px-3.5 py-3 text-sm leading-6 text-stone-800 outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-200/70 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:focus:border-stone-500 dark:focus:ring-stone-700/60" />
           </EditorField> : null}
           {mode === "procedural" && <p className="-mt-3 text-right text-xs text-stone-400">{editor.draft.content.length}/4,000</p>}
           {editor.conflict && <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
@@ -217,15 +219,16 @@ function MemoryDocRow({
             <p className="mt-2 text-xs">Your draft remains below so you can copy it.</p>
           </div>}
           {editor.error && <div><FieldError>{editor.error}</FieldError>{editor.retryable && <button type="button" onClick={onRetry} className="mt-2 text-sm font-medium text-stone-600 underline dark:text-stone-300">Retry</button>}</div>}
-          <div className="flex flex-wrap items-center gap-2">
-            <button type="button" disabled={!changed || invalid || editor.busy} onClick={onSave} className="rounded-lg bg-stone-800 px-3 py-2 text-sm font-medium text-white dark:bg-red-700 transition-colors hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-45  dark:text-stone-900 dark:hover:bg-white">{editor.busy ? "Saving…" : "Save"}</button>
-            <button type="button" disabled={editor.busy} onClick={onCancel} className="rounded-lg px-3 py-2 text-sm  text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-100">Cancel</button>
+          <div className="flex flex-wrap items-center gap-2 border-t border-stone-200 pt-4 dark:border-stone-800">
+            <button type="button" disabled={!changed || invalid || editor.busy} onClick={onSave} className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white transition-[transform,background-color] duration-150 hover:bg-stone-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white">{editor.busy ? "Saving…" : "Save changes"}</button>
+            <button type="button" disabled={editor.busy} onClick={onCancel} className="rounded-lg border border-stone-200 bg-white px-3.5 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-100 disabled:opacity-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300 dark:hover:bg-stone-800">Cancel</button>
             {editor.deleteConfirm ? <>
               <span className="text-sm text-stone-600 dark:text-stone-300">Delete this {mode === "semantic" ? "document" : "instruction"}?</span>
               <button type="button" disabled={deletePending} onClick={onDelete} className="rounded-lg px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50 dark:text-rose-300 dark:hover:bg-rose-950">{deletePending ? <span aria-label="Deleting" className="inline-block size-4 animate-spin rounded-full border-2 border-current border-r-transparent align-middle" /> : "Confirm delete"}</button>
               <button type="button" disabled={deletePending} onClick={onCancel} className="rounded-lg px-3 py-2 text-sm text-stone-600 hover:bg-stone-100 disabled:opacity-50 dark:text-stone-300 dark:hover:bg-stone-800">Keep</button>
             </> : <button type="button" disabled={editor.busy} onClick={onDeleteAsk} className="ml-auto rounded-lg px-3 py-2 text-sm text-red-700 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950">Delete {mode === "semantic" ? "document" : "instruction"}</button>}
           </div>
+        </div>
         </div>
         </div> : editor?.deleteConfirm && <div className="space-y-4 px-3 pb-5 pt-2 sm:px-5" role="alert">
           <p className="text-sm text-stone-600 dark:text-stone-300">Delete this {mode === "semantic" ? "document" : "instruction"}?</p>
