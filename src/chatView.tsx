@@ -738,24 +738,35 @@ const markdownComponents = {
       </code>
     );
   },
-  table({ children }: any) {
+  table({ children, ...props }: any) {
     return (
-      <div className="overflow-x-auto my-2">
-        <table className="border-collapse border border-stone-200 text-sm">
+      <div
+        className="my-4 max-w-full overflow-x-auto rounded-xl border border-stone-200 bg-white shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 dark:border-stone-700 dark:bg-stone-900 dark:focus-visible:ring-stone-500 dark:focus-visible:ring-offset-stone-950"
+        tabIndex={0}
+        role="region"
+        aria-label="Scrollable table"
+      >
+        <table className="w-full min-w-120 border-separate border-spacing-0 text-left text-[13px] leading-5 text-stone-700 dark:text-stone-300" {...props}>
           {children}
         </table>
       </div>
     );
   },
-  th({ children }: any) {
+  thead({ children, ...props }: any) {
+    return <thead className="bg-stone-50 dark:bg-stone-800/80" {...props}>{children}</thead>;
+  },
+  tr({ children, ...props }: any) {
+    return <tr className="transition-colors duration-150 even:bg-stone-50/60 hover:bg-stone-50 dark:even:bg-stone-800/35 dark:hover:bg-stone-800/60" {...props}>{children}</tr>;
+  },
+  th({ children, ...props }: any) {
     return (
-      <th className="border border-stone-200 bg-stone-50 px-3 py-1.5 text-left font-medium">
+      <th className="whitespace-nowrap border-b border-stone-200 px-4 py-3 text-left text-xs font-semibold tracking-wide text-stone-600 first:pl-4 last:pr-4 dark:border-stone-700 dark:text-stone-300 not-last:border-r not-last:border-stone-200 dark:not-last:border-stone-700" {...props}>
         {children}
       </th>
     );
   },
-  td({ children }: any) {
-    return <td className="border border-stone-200 px-3 py-1.5">{children}</td>;
+  td({ children, ...props }: any) {
+    return <td className="border-b border-stone-100 px-4 py-3 align-top leading-6 text-stone-700 last:border-r-0 dark:border-stone-800 dark:text-stone-300 not-last:border-r not-last:border-stone-100 dark:not-last:border-stone-800" {...props}>{children}</td>;
   },
 };
 
