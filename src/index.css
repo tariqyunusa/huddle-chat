@@ -6,7 +6,7 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 @theme {
-  --font-lora: 'Lora', "Georgia", serif;
+  --font-lora: 'Georgia', "Lora", serif;
 }
 
 html {
