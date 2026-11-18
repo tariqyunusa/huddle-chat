@@ -54,6 +54,7 @@ export default function SignupForm({
         "huddle_email_verified",
         String(result.email_verified),
       );
+      localStorage.setItem("huddle_onboarding_invite_pending", "true");
       onSignedUp(result.user_id);
     } catch (err) {
       showToast(
