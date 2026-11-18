@@ -30,6 +30,7 @@ import ThemeMenu from "./ThemeMenu";
 import BillingModal from "./BillingModal";
 import BillingCallbackPage from "./BillingCallbackPage";
 import SettingsModal from "./SettingsModal";
+import OnboardingInviteScreen from "./OnboardingInviteScreen";
 
 function getSessionFromUrl(): string | null {
   const params = new URLSearchParams(window.location.search);
@@ -297,6 +298,10 @@ function App() {
         onVerified={() => setVerificationPending(false)}
       />
     );
+  }
+
+  if (userId && localStorage.getItem("huddle_onboarding_invite_pending") === "true") {
+    return <OnboardingInviteScreen onDone={() => window.location.reload()} />;
   }
 
   if (window.location.pathname === "/billing/callback") {
