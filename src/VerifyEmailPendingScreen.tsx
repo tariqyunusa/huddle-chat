@@ -41,29 +41,30 @@ export default function VerifyEmailPendingScreen({
   }
 
   return (
-    <div className="flex h-screen items-center justify-center bg-white">
-      <div className="text-center max-w-sm px-6">
-        <h1 className="text-lg font-semibold text-stone-800 mb-2">Verify your email</h1>
-        <p className="text-sm text-stone-500 mb-6">
-          Check your inbox and click the verification link to continue.
+    <main className="flex min-h-screen items-center justify-center bg-white px-4 py-12 text-stone-950 dark:bg-stone-950">
+      <div className="w-full max-w-md space-y-5 text-center">
+        <img src="/huddle-logo.svg" alt="Huddle" className="mx-auto h-20 w-20" />
+        <h1 className="font-lora text-3xl tracking-tight text-stone-950 dark:text-stone-100">Check your email</h1>
+        <p className="text-stone-500">
+          We sent a verification link to your email address. Open the message and click the link to verify your account.
         </p>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3 pt-2">
           <button
             onClick={handleCheckVerified}
             disabled={checking}
-            className="bg-stone-800 text-white rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50"
+            className="auth-button w-full rounded-2xl bg-blue-600 px-4 py-4 text-base font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
           >
             {checking ? "Checking…" : "I've verified"}
           </button>
           <button
             onClick={handleResend}
             disabled={resending}
-            className="text-sm text-stone-500 underline underline-offset-2 disabled:opacity-50"
+            className="w-full rounded-2xl border border-stone-300 px-4 py-4 text-sm font-semibold text-stone-600 transition hover:bg-stone-50 disabled:opacity-50 dark:text-stone-300 dark:hover:bg-stone-900"
           >
             {resending ? "Sending…" : "Resend verification email"}
           </button>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
