@@ -10,20 +10,22 @@ type Step = "email" | "password" | "name";
 export default function SignupForm({
   onSignedUp,
   onSwitchToLogin,
+  initialProfile,
 }: {
   onSignedUp: (userId: string) => void;
   onSwitchToLogin: () => void;
+  initialProfile?: { name: string; avatarUrl?: string };
 }) {
-  const [step, setStep] = useState<Step>("email");
+  const [step, setStep] = useState<Step>(initialProfile ? "name" : "email");
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
+  const [name, setName] = useState(initialProfile?.name ?? "");
   const [role, setRole] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(initialProfile?.avatarUrl ?? null);
   const avatarInput = useRef<HTMLInputElement>(null);
   const showToast = useToast();
 
@@ -33,29 +35,38 @@ export default function SignupForm({
   }
 
   function handleBack() {
+    if (initialProfile) {
+      onSwitchToLogin();
+      return;
+    }
     setStep(step === "name" ? "password" : "email");
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (password !== confirmPassword) {
+    if (!initialProfile && password !== confirmPassword) {
       showToast("error", "Passwords don't match.");
       return;
     }
     setLoading(true);
     try {
-      await signup(email, name, password);
-      const result = await login(email, password);
-      localStorage.setItem("huddle_token", result.access_token);
-      localStorage.setItem("huddle_refresh_token", result.refresh_token);
-      localStorage.setItem("huddle_user_id", result.user_id);
-      localStorage.setItem("huddle_display_name", result.display_name);
-      localStorage.setItem(
-        "huddle_email_verified",
-        String(result.email_verified),
-      );
+      let userId: string;
+      if (initialProfile) {
+        userId = localStorage.getItem("huddle_user_id")!;
+        localStorage.setItem("huddle_display_name", name.trim());
+        localStorage.removeItem("huddle_google_profile_pending");
+      } else {
+        await signup(email, name, password);
+        const result = await login(email, password);
+        localStorage.setItem("huddle_token", result.access_token);
+        localStorage.setItem("huddle_refresh_token", result.refresh_token);
+        localStorage.setItem("huddle_user_id", result.user_id);
+        localStorage.setItem("huddle_display_name", result.display_name);
+        localStorage.setItem("huddle_email_verified", String(result.email_verified));
+        userId = result.user_id;
+      }
       localStorage.setItem("huddle_onboarding_invite_pending", "true");
-      onSignedUp(result.user_id);
+      onSignedUp(userId);
     } catch (err) {
       showToast(
         "error",

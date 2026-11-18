@@ -48,6 +48,7 @@ function getResetTokenFromUrl(): string | null {
 }
 
 function App() {
+  const [googleProfile, setGoogleProfile] = useState<{ name: string; avatarUrl?: string } | null>(null);
   const [userId, setUserId] = useState<string | null>(
     localStorage.getItem("huddle_user_id"),
   );
@@ -75,6 +76,33 @@ function App() {
     getSessionFromUrl(),
   );
   const showToast = useToast();
+  useEffect(() => {
+    if (window.location.pathname !== "/auth/callback") return;
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+    const id = params.get("user_id");
+    if (!accessToken || !refreshToken || !id) {
+      window.history.replaceState({}, "", "/login");
+      showToast("error", "Google sign-in didn't complete. Please try again.");
+      setAuthMode("login");
+      return;
+    }
+    const name = params.get("display_name") ?? "";
+    const verified = params.get("email_verified") === "true";
+    localStorage.setItem("huddle_token", accessToken);
+    localStorage.setItem("huddle_refresh_token", refreshToken);
+    localStorage.setItem("huddle_user_id", id);
+    localStorage.setItem("huddle_display_name", name);
+    localStorage.setItem("huddle_email_verified", String(verified));
+    localStorage.setItem("huddle_plan", params.get("plan") ?? "free");
+    localStorage.setItem("huddle_onboarding_invite_pending", "true");
+    localStorage.setItem("huddle_google_profile_pending", "true");
+    setGoogleProfile({ name, avatarUrl: params.get("picture") ?? undefined });
+    setUserId(null);
+    setAuthMode("signup");
+    window.history.replaceState({}, "", "/");
+  }, []);
   const [creating, setCreating] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [billingOpen, setBillingOpen] = useState(false);
@@ -255,11 +283,16 @@ function App() {
     );
   }
 
+  if (localStorage.getItem("huddle_google_profile_pending") === "true" && googleProfile) {
+    return <SignupForm initialProfile={googleProfile} onSignedUp={id => { setUserId(id); setGoogleProfile(null); setVerificationPending(localStorage.getItem("huddle_email_verified") !== "true"); }} onSwitchToLogin={() => setAuthMode("login")} />;
+  }
+
   if (!userId) {
     return (
       <AnimatePresence mode="wait">
         {authMode === "signup" && (
           <SignupForm
+            initialProfile={googleProfile ?? undefined}
             onSignedUp={(id) => {
               setUserId(id);
               setVerificationPending(
