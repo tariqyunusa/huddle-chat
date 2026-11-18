@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import AuthTransition from "./AuthTransition";
 import { Eye, EyeOff } from "lucide-react";
 
-type Step = "name" | "email" | "password";
+type Step = "email" | "password" | "name";
 
 export default function SignupForm({
   onSignedUp,
@@ -14,233 +14,79 @@ export default function SignupForm({
   onSignedUp: (userId: string) => void;
   onSwitchToLogin: () => void;
 }) {
-  const [step, setStep] = useState<Step>("name");
+  const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const showToast = useToast();
 
   function handleNext(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-    if (step === "name") {
-      if (!name.trim()) return;
-      setStep("email");
-    } else if (step === "email") {
-      if (!email.trim()) return;
-      setStep("password");
-    }
+    setStep(step === "email" ? "password" : "name");
   }
 
   function handleBack() {
-    setError(null);
-    if (step === "email") setStep("name");
-    else if (step === "password") setStep("email");
+    setStep(step === "name" ? "password" : "email");
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!password.trim()) return;
     if (password !== confirmPassword) {
       showToast("error", "Passwords don't match.");
       return;
     }
-    setError(null);
     setLoading(true);
     try {
       await signup(email, name, password);
-    } catch (err) {
-      showToast("error", err instanceof Error ? err.message : "Signup failed. Try again.");
-      setLoading(false);
-      return;
-    }
-
-    try {
       const result = await login(email, password);
       localStorage.setItem("huddle_token", result.access_token);
       localStorage.setItem("huddle_refresh_token", result.refresh_token);
       localStorage.setItem("huddle_user_id", result.user_id);
       localStorage.setItem("huddle_display_name", result.display_name);
-      localStorage.setItem(
-        "huddle_email_verified",
-        String(result.email_verified),
-      );
+      localStorage.setItem("huddle_email_verified", String(result.email_verified));
       onSignedUp(result.user_id);
     } catch (err) {
-      if (err instanceof Error && err.message === "RATE_LIMITED") {
-        showToast("error", "Too many login attempts. Please wait a few minutes and try again.");
-      } else {
-        showToast("error", "Account created, but login failed. Try logging in manually.");
-      }
+      showToast("error", err instanceof Error ? err.message : "Signup failed. Try again.");
     } finally {
       setLoading(false);
     }
   }
 
+  const field = "w-full rounded-2xl border border-stone-300 bg-white px-3 py-3 text-center text-base outline-none transition focus:border-blue-100 focus:ring-1 focus:ring-blue-50 placeholder:text-stone-400 dark:bg-stone-900";
+
   return (
-    <div className="flex h-screen bg-white text-stone-950 p-2">
-      <div className="hidden md:block md:w-1/2 relative rounded-2xl">
-        <img
-          src="/bg.webp"
-          alt="intro-image"
-          className="w-full h-full object-cover rounded-xl"
-        />
-      </div>
-      <div className="flex flex-col justify-center items-center w-full md:w-1/2">
-        <AuthTransition>
-          <form
-            onSubmit={step === "password" ? handleSubmit : handleNext}
-            className="w-full max-w-sm space-y-4 px-6"
-          >
-            <h1 className="text-xl dark:text-stone-300  font-semibold tracking-tight text-center mb-2">
-              Welcome to Huddle
-            </h1>
-            <p className="text-base text-gray-500 text-center mb-4">
-              {step === "name" && "What should we call you?"}
-              {step === "email" && "What's your email?"}
-              {step === "password" && "Create a password"}
-            </p>
-
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={step}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-              >
-                {step === "name" && (
-                  <input
-                    type="text"
-                    placeholder="Your name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    autoFocus
-                    required
-                    className="w-full bg-stone-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-stone-500"
-                  />
-                )}
-                {step === "email" && (
-                  <input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoFocus
-                    required
-                    className="w-full bg-stone-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-stone-500"
-                  />
-                )}
-                {step === "password" && (
-                  <div className="space-y-3">
-                    <div className="relative">
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        autoFocus
-                        required
-                        minLength={8}
-                        className="w-full bg-stone-100 rounded-xl px-4 py-2 pr-10 text-sm outline-none focus:border-stone-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((prev) => !prev)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 no-inset"
-                      >
-                        {showPassword ? (
-                          <EyeOff size={16} />
-                        ) : (
-                          <Eye size={16} />
-                        )}
-                      </button>
-                    </div>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Confirm password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                        minLength={8}
-                        className="w-full bg-stone-100 rounded-xl px-4 py-2 pr-10 text-sm outline-none focus:border-stone-500"
-                      />
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
-
-            {error && <p className="text-sm text-rose-400">{error}</p>}
-
-            <div className="flex gap-2">
-              {step !== "name" && (
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="auth-button dark-auth-button w-1/3 bg-stone-900 text-stone-100 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors"
-                >
-                  Back
-                </button>
-              )}
-              <button
-                type="submit"
-                disabled={loading}
-                className="auth-button dark-auth-button flex-1 bg-stone-900 text-stone-100 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
-              >
-                {step === "password"
-                  ? loading
-                    ? "Joining…"
-                    : "Continue"
-                  : "Next"}
-              </button>
-            </div>
-
-            <div className="flex justify-center gap-1.5 pt-2">
-              {(["name", "email", "password"] as Step[]).map((s) => (
-                <div
-                  key={s}
-                  className={`h-1.5 rounded-full transition-all ${
-                    s === step
-                      ? "w-6  dark:bg-white bg-stone-300"
-                      : "w-1.5 bg-stone-300"
-                  }`}
-                />
-              ))}
-            </div>
-
-            <p className="text-sm text-center text-stone-500">
-              Already have an account?{" "}
-              <button
-                type="button"
-                onClick={onSwitchToLogin}
-                className="text-stone-800 underline underline-offset-2 no-inset cursor-pointer"
-              >
-                Log in
-              </button>
-            </p>
-          </form>
-        </AuthTransition>
-        <div className="absolute bottom-4 text-xs text-stone-500 text-center">
-          <p>
-            Created by{" "}
-            <a
-              href="https://tariqyunusa.xyz"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-400 hover:underline"
-            >
-              Tariq Yunusa
+    <main className="relative flex min-h-screen items-center justify-center bg-white px-4 py-12 text-stone-950 dark:bg-stone-950">
+      {step !== "email" && <button type="button" onClick={handleBack} className="absolute left-6 top-8 text-sm font-semibold hover:text-blue-600">‹&nbsp; Go back</button>}
+      <AuthTransition>
+        <form onSubmit={step === "name" ? handleSubmit : handleNext} className="w-full max-w-md space-y-5">
+          <div className=" flex  flex-col items-center justify-center gap-1" aria-label="Huddle">
+            <img src="/huddle-logo.svg" alt="" className="h-[100px] w-[100px]" />
+          </div>
+          <h1 className="text-center font-lora text-3xl tracking-tight">{step === "name" ? "Tell us about you" : "Welcome to Huddle"}</h1>
+          {step === "email" && <p className="text-center text-stone-500">AI that works in the room, not alone.</p>}
+          {step === "email" && <>
+            <a href={`${import.meta.env.VITE_BACKEND_HOST?.includes("localhost") ? "http" : "https"}://${import.meta.env.VITE_BACKEND_HOST || "huddle-6j42.onrender.com"}/auth/google`} className="flex w-full items-center justify-center gap-3 rounded-2xl border border-stone-300 bg-white px-4 py-4 text-base font-medium transition hover:bg-stone-50 dark:bg-stone-900">
+              <svg aria-hidden="true" viewBox="0 0 48 48" className="h-5 w-5"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.76 7.18l7.73 6C44.42 37.98 46.98 31.8 46.98 24.55Z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.19A23.9 23.9 0 0 0 0 24c0 3.87.93 7.52 2.56 10.78l7.97-6.19Z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.8l-7.73-6c-2.14 1.44-4.89 2.3-8.18 2.3-6.26 0-11.57-4.22-13.46-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z"/></svg>
+              Continue with Google
             </a>
-          </p>
-        </div>
-      </div>
-    </div>
+            <div className="flex items-center gap-4 text-xs text-stone-400"><span className="h-px flex-1 bg-stone-200"/>Or<span className="h-px flex-1 bg-stone-200"/></div>
+          </>}
+          <AnimatePresence mode="wait">
+            <motion.div key={step} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }} className="space-y-4 pt-3">
+              {step === "email" && <><input className={field} type="email" placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)} autoFocus required /></>}
+              {step === "password" && <><div className="relative"><input className={field} type={showPassword ? "text" : "password"} placeholder="Create a password (8+ characters)" value={password} onChange={e => setPassword(e.target.value)} autoFocus minLength={8} required /><button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-4 text-stone-500" aria-label={showPassword ? "Hide password" : "Show password"}>{showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}</button></div><div className="relative"><input className={field} type={showConfirmPassword ? "text" : "password"} placeholder="Confirm password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} minLength={8} required /><button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-4 text-stone-500" aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}>{showConfirmPassword ? <EyeOff size={18}/> : <Eye size={18}/>}</button></div></>}
+              {step === "name" && <><input className={field} type="text" placeholder="Full name" value={name} onChange={e => setName(e.target.value)} autoFocus required /><p className="text-center text-sm text-stone-600">What should we call you?</p></>}
+            </motion.div>
+          </AnimatePresence>
+          <button type="submit" disabled={loading} className="auth-button w-full rounded-2xl bg-blue-600 px-4 py-4 text-base font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50">{loading ? "Creating your account…" : step === "name" ? "Create account" : "Continue"}</button>
+          <p className="text-center text-sm text-stone-500">Already have an account? <button type="button" onClick={onSwitchToLogin} className="font-medium text-blue-700 underline underline-offset-2">Log in</button></p>
+          <p className="text-center text-xs text-stone-500">By continuing, you agree to Huddle’s Terms &amp; Privacy.</p>
+        </form>
+      </AuthTransition>
+    </main>
   );
 }
