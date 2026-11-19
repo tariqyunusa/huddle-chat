@@ -119,7 +119,7 @@ export default function SignupForm({
             <img
               src="/huddle-logo.svg"
               alt=""
-              className="h-[100px] w-[100px]"
+              className="h-25 w-25"
             />
           </div>
           <h1 className="text-center font-lora text-3xl tracking-tight">

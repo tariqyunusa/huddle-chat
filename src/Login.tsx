@@ -58,7 +58,7 @@ export default function LoginForm({
             <img
               src="/huddle-logo.svg"
               alt=""
-              className="h-[100px] w-[100px]"
+              className="h-25 w-25"
             />
           </div>
           <h1 className="text-center font-lora text-3xl tracking-tight">
@@ -91,6 +91,11 @@ export default function LoginForm({
                 </svg>
             Continue with Google
           </a>
+          <div className="flex items-center gap-4 text-xs text-stone-400">
+            <span className="h-px flex-1 bg-stone-200" />
+            Or
+            <span className="h-px flex-1 bg-stone-200" />
+          </div>
           <input
             type="email"
             placeholder="Email"
@@ -146,19 +151,7 @@ export default function LoginForm({
           </p>
         </form>
       </AuthTransition>
-      <div className="absolute bottom-4 text-xs text-stone-500 text-center">
-        <p>
-          Created by{" "}
-          <a
-            href="https://tariqyunusa.xyz"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-gray-400 hover:underline cursor-pointer"
-          >
-            Tariq Yunusa
-          </a>
-        </p>
-      </div>
+      
     </main>
   );
 }
