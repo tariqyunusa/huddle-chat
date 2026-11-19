@@ -30,33 +30,24 @@ export default function ForgotPasswordForm({
   }
 
   return (
-    <div
-      
-      onSubmit={handleSubmit}
-      className="flex h-screen bg-white text-stone-950 p-2"
-    >
-      <div className="hidden md:block md:w-1/2 relative rounded-2xl">
-        <img
-          src="/bg.webp"
-          alt="intro-image"
-          className="w-full h-full object-cover rounded-xl"
-        />
-      </div>
-      <div className="flex flex-col justify-center items-center w-full md:w-1/2">
-        <div className="w-full max-w-sm space-y-4 px-6">
-          <h1 className="text-xl font-semibold tracking-tight text-center mb-2 dark:text-stone-300 ">
+    <main className="relative flex min-h-screen items-center justify-center bg-white px-4 py-12 text-stone-950 dark:bg-stone-950">
+      <div className="w-full max-w-md space-y-5">
+          <div className="flex flex-col items-center justify-center gap-1" aria-label="Huddle">
+            <img src="/huddle-logo.svg" alt="" className="h-[100px] w-[100px]" />
+          </div>
+          <h1 className="text-center font-lora text-3xl tracking-tight">
             Reset your password
           </h1>
 
           {sent ? (
             <>
-              <p className="text-base text-gray-500 text-center">
+              <p className="text-center text-stone-500">
                 If an account exists for <strong>{email}</strong>, a reset link
                 has been sent.
               </p>
               <button
                 onClick={onBackToLogin}
-                className="w-full bg-stone-200 text-stone-900 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors"
+                className="auth-button w-full rounded-2xl bg-blue-600 px-4 py-4 text-base font-semibold text-white transition hover:bg-blue-700"
               >
                 Back to login
               </button>
@@ -68,7 +59,7 @@ export default function ForgotPasswordForm({
               onSubmit={handleSubmit}
               className="space-y-4"
             >
-              <p className="text-base text-gray-500 text-center mb-4">
+              <p className="text-center text-stone-500">
                 Enter your email and we'll send you a reset link.
               </p>
               <input
@@ -78,12 +69,12 @@ export default function ForgotPasswordForm({
                 onChange={(e) => setEmail(e.target.value)}
                 autoFocus
                 required
-                className="w-full bg-stone-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-stone-500"
+                className="w-full rounded-2xl border border-stone-300 bg-white px-3 py-3 text-center text-base outline-none transition focus:border-blue-100 focus:ring-1 focus:ring-blue-50 placeholder:text-stone-400 dark:bg-stone-900"
               />
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-stone-900 auth-button dark-auth-button text-stone-100 cursor-pointer rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+                className="auth-button w-full rounded-2xl bg-blue-600 px-4 py-4 text-base font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
               >
                 {loading ? "Sending…" : "Send reset link"}
               </button>
@@ -99,21 +90,8 @@ export default function ForgotPasswordForm({
             </form>
             </AuthTransition>
           )}
-        </div>
-         <div className="absolute bottom-4 text-xs text-stone-500 text-center">
-          <p>
-            Created by{" "}
-            <a
-              href="https://tariqyunusa.xyz"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-400 hover:underline"
-            >
-              Tariq Yunusa
-            </a>
-          </p>
-        </div>
       </div>
-    </div>
+      
+    </main>
   );
 }
