@@ -38,17 +38,16 @@ export default function OnboardingInviteScreen({ onDone }: { onDone: () => void 
 
   return (
     <main className="relative flex min-h-screen items-center justify-center bg-white px-4 py-12 text-stone-950 dark:bg-stone-950">
-      <button type="button" onClick={finish} className="absolute left-6 top-8 flex items-center gap-2 text-sm font-semibold"><ArrowLeft size={17}/> Go back</button>
+      <button type="button" onClick={finish} className="absolute left-6 top-8 flex items-center gap-2 text-sm font-semibold text-stone-600 hover:text-blue-700 dark:text-stone-300"><ArrowLeft size={17}/> Skip setup</button>
       <section className="w-full max-w-md space-y-5 text-center">
         <img src="/huddle-logo.svg" alt="Huddle" className="mx-auto h-20 w-20" />
-        <h1 className="font-lora text-3xl tracking-tight">Create a Huddle</h1>
-        <p className="text-stone-500">Invite your friends, co-workers, or partners to a Huddle and work through everything.</p>
-        <label htmlFor="onboarding-invite-email" className="sr-only">Email address to invite</label>
-        <input id="onboarding-invite-email" type="email" placeholder="Email" value={email} onChange={event => setEmail(event.target.value)} className="w-full rounded-2xl border border-stone-300 bg-white px-4 py-4 text-center outline-none placeholder:text-stone-400 focus:border-blue-500 dark:bg-stone-900" />
-        <button type="button" disabled={busy || !email.trim()} onClick={() => void createAndInvite(false)} className="auth-button w-full rounded-2xl bg-blue-600 px-4 py-4 font-semibold text-white hover:bg-blue-700 disabled:opacity-50">{busy ? "Creating your Huddle…" : "Continue"}</button>
-        <button type="button" disabled={busy} onClick={() => void createAndInvite(true)} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-stone-300 px-4 py-4 font-semibold text-stone-600 hover:bg-stone-50 disabled:opacity-50 dark:text-stone-300 dark:hover:bg-stone-900"><Link2 size={17}/> Create and copy invite link</button>
-        <button type="button" disabled={busy} onClick={finish} className="w-full rounded-2xl border border-stone-300 px-4 py-4 font-semibold text-stone-500 hover:bg-stone-50 disabled:opacity-50 dark:hover:bg-stone-900">Skip for now</button>
-        <p className="text-xs text-stone-400">You can invite people anytime from your Huddle.</p>
+        <h1 className="font-lora text-3xl tracking-tight">Bring your team together</h1>
+        <p className="text-stone-500">Start your first shared space and invite someone to plan, discuss, and work together. You can do this later, too.</p>
+        <label htmlFor="onboarding-invite-email" className="block text-left text-sm font-medium text-stone-700 dark:text-stone-300">Teammate’s email</label>
+        <input id="onboarding-invite-email" type="email" placeholder="name@example.com" value={email} onChange={event => setEmail(event.target.value)} className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-left outline-none placeholder:text-stone-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:bg-stone-900 dark:focus:border-blue-400 dark:focus:ring-blue-900" />
+        <button type="button" disabled={busy || !email.trim()} onClick={() => void createAndInvite(false)} className="auth-button w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50">{busy ? "Creating your Huddle…" : "Create Huddle and send invite"}</button>
+        <button type="button" disabled={busy} onClick={() => void createAndInvite(true)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-stone-300 px-4 py-3 font-semibold text-stone-700 transition hover:bg-stone-50 active:scale-[0.98] disabled:opacity-50 dark:text-stone-300 dark:hover:bg-stone-900"><Link2 size={17}/> Create Huddle and copy invite link</button>
+        <p className="text-xs text-stone-500">Or skip setup and explore Huddle. You can invite people anytime.</p>
       </section>
     </main>
   );

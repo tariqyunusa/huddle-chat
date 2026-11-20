@@ -3,7 +3,7 @@ import { signup, login } from "./api";
 import { useToast } from "./Toast";
 import { AnimatePresence, motion } from "motion/react";
 import AuthTransition from "./AuthTransition";
-import { Camera, Eye, EyeOff, UserRound, X } from "lucide-react";
+import { Camera, Check, ChevronDown, Eye, EyeOff, UserRound, X } from "lucide-react";
 
 type Step = "email" | "password" | "name";
 
@@ -20,6 +20,8 @@ export default function SignupForm({
   const [email, setEmail] = useState("");
   const [name, setName] = useState(initialProfile?.name ?? "");
   const [role, setRole] = useState("");
+  const [roleOpen, setRoleOpen] = useState(false);
+  const [activeRoleIndex, setActiveRoleIndex] = useState(0);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -27,6 +29,15 @@ export default function SignupForm({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(initialProfile?.avatarUrl ?? null);
   const avatarInput = useRef<HTMLInputElement>(null);
+  const roleTrigger = useRef<HTMLButtonElement>(null);
+  const roleOptions = useRef<Array<HTMLButtonElement | null>>([]);
+  const roles = [
+    { value: "founder", label: "Founder", detail: "Building a company or team" },
+    { value: "engineer", label: "Engineer", detail: "Designing and building products" },
+    { value: "student", label: "Student", detail: "Learning or working on a project" },
+    { value: "designer", label: "Designer", detail: "Shaping experiences and ideas" },
+    { value: "other", label: "Other", detail: "Something else" },
+  ];
   const showToast = useToast();
 
   function handleNext(e: React.FormEvent) {
@@ -78,7 +89,7 @@ export default function SignupForm({
   }
 
   const field =
-    "w-full rounded-2xl border border-stone-300 bg-white px-3 py-3 text-center text-base outline-none transition focus:border-blue-100 focus:ring-1 focus:ring-blue-50 placeholder:text-stone-400 dark:bg-stone-900";
+    "w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-left text-base outline-none placeholder:text-stone-400 focus:border-blue-100 focus:ring-1 focus:ring-blue-100 dark:bg-stone-900 dark:focus:border-blue-400 dark:focus:ring-blue-100";
 
   function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -122,14 +133,32 @@ export default function SignupForm({
               className="h-25 w-25"
             />
           </div>
-          <h1 className="text-center font-lora text-3xl tracking-tight">
-            {step === "name" ? "Tell us about you" : "Welcome to Huddle"}
-          </h1>
-          {step === "email" && (
-            <p className="text-center text-stone-500">
-              AI that works in the room, not alone.
-            </p>
-          )}
+          {!initialProfile && <nav aria-label="Signup progress" className="fixed bottom-5 right-5 z-10 flex items-center gap-2 sm:bottom-8 sm:right-8">
+            {(["email", "password", "name"] as const).map((stepName, index) => {
+              const currentIndex = step === "email" ? 0 : step === "password" ? 1 : 2;
+              const isCurrent = currentIndex === index;
+              const isComplete = currentIndex > index;
+              return <span key={stepName} aria-current={isCurrent ? "step" : undefined} aria-label={`Step ${index + 1}${isCurrent ? ", current" : isComplete ? ", complete" : ""}`} className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold transition-colors ${isCurrent ? "border-blue-600 bg-blue-600 text-white" : isComplete ? "border-blue-600 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300" : "border-stone-300 text-stone-500 dark:border-stone-700"}`}>{index + 1}</span>;
+            })}
+          </nav>}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={`heading-${step}`}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -3 }}
+              transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
+            >
+              <h1 className="text-center font-lora text-3xl tracking-tight">
+                {step === "name" ? "Tell us about you" : step === "password" ? "Secure your account" : "Work better together"}
+              </h1>
+              {step === "email" && (
+                <p className="mt-2 text-center text-stone-500">
+                  Bring your team into one shared space to think, plan, and get work done together.
+                </p>
+              )}
+            </motion.div>
+          </AnimatePresence>
           {step === "email" && (
             <>
               <a
@@ -166,10 +195,10 @@ export default function SignupForm({
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.18 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
               className="space-y-4 pt-3"
             >
               {step === "email" && (
@@ -177,6 +206,7 @@ export default function SignupForm({
                   <input
                     className={field}
                     type="email"
+                    aria-label="Email address"
                     placeholder="Email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -191,6 +221,7 @@ export default function SignupForm({
                     <input
                       className={field}
                       type={showPassword ? "text" : "password"}
+                      aria-label="Create a password"
                       placeholder="Create a password (8+ characters)"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -211,6 +242,7 @@ export default function SignupForm({
                   </div>
                   <div className="relative">
                     <input
+                      aria-label="Confirm password"
                       className={field}
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="Confirm password"
@@ -247,7 +279,7 @@ export default function SignupForm({
                       <button
                         type="button"
                         onClick={() => avatarInput.current?.click()}
-                        className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-stone-200 text-stone-500 transition hover:ring-4 hover:ring-blue-100 dark:bg-stone-800"
+                    className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-stone-200 text-stone-500 transition hover:ring-4 hover:ring-blue-100 active:scale-[0.97] dark:bg-stone-800"
                         aria-label={
                           avatarUrl
                             ? "Change profile photo"
@@ -296,34 +328,71 @@ export default function SignupForm({
                   <input
                     className={field}
                     type="text"
+                    aria-label="Full name"
                     placeholder="Full name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     autoFocus
                     required
                   />
-                  <label
-                    htmlFor="signup-role"
-                    className="block text-center text-base text-stone-700 dark:text-stone-300"
-                  >
-                    What best describes what you do?
-                  </label>
-                  <select
-                    id="signup-role"
-                    className={`${field} text-stone-700 dark:text-stone-300`}
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    required
-                  >
-                    <option value="" disabled>
-                      Select your role
-                    </option>
-                    <option value="founder">Founder</option>
-                    <option value="engineer">Engineer</option>
-                    <option value="student">Student</option>
-                    <option value="designer">Designer</option>
-                    <option value="other">Other</option>
-                  </select>
+                  <div className="space-y-2 ">
+                    <label id="signup-role-label" className="block text-left text-sm font-medium text-stone-700 dark:text-stone-300">
+                      What best describes what you do? <span className="font-normal text-stone-500">Optional</span>
+                    </label>
+                    <div className="relative">
+                      <button
+                        ref={roleTrigger}
+                        type="button"
+                        aria-labelledby="signup-role-label"
+                        aria-haspopup="listbox"
+                        aria-expanded={roleOpen}
+                        aria-controls="signup-role-options"
+                        onClick={() => {
+                          setActiveRoleIndex(Math.max(0, roles.findIndex(option => option.value === role)));
+                          setRoleOpen(open => !open);
+                        }}
+                        onKeyDown={event => {
+                          if (["ArrowDown", "ArrowUp", "Enter", " "].includes(event.key)) {
+                            event.preventDefault();
+                            setRoleOpen(true);
+                            const index = roles.findIndex(option => option.value === role);
+                            setActiveRoleIndex(index >= 0 ? index : 0);
+                            requestAnimationFrame(() => roleOptions.current[index >= 0 ? index : 0]?.focus());
+                          }
+                        }}
+                        className={`${field} flex items-center justify-between ${role ? "text-stone-900 dark:text-stone-100" : "text-stone-500"}`}
+                      >
+                        <span>{roles.find(option => option.value === role)?.label ?? "Choose a role"}</span>
+                        <ChevronDown size={18} className={`text-stone-500 transition-transform duration-150 ease-out ${roleOpen ? "rotate-180" : ""}`} />
+                      </button>
+                      {roleOpen && <div id="signup-role-options" role="listbox" aria-labelledby="signup-role-label" className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-stone-200 bg-white p-1.5 shadow-xl shadow-stone-900/10 dark:border-stone-700 dark:bg-stone-900">
+                        {roles.map((option, index) => <button
+                          key={option.value}
+                          ref={element => { roleOptions.current[index] = element; }}
+                          type="button"
+                          role="option"
+                          aria-selected={role === option.value}
+                          tabIndex={activeRoleIndex === index ? 0 : -1}
+                          onFocus={() => setActiveRoleIndex(index)}
+                          onClick={() => { setRole(option.value); setRoleOpen(false); roleTrigger.current?.focus(); }}
+                          onKeyDown={event => {
+                            if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                              event.preventDefault();
+                              const next = (index + (event.key === "ArrowDown" ? 1 : roles.length - 1)) % roles.length;
+                              setActiveRoleIndex(next);
+                              roleOptions.current[next]?.focus();
+                            } else if (event.key === "Escape") {
+                              event.preventDefault(); setRoleOpen(false); roleTrigger.current?.focus();
+                            } else if (event.key === "Tab") setRoleOpen(false);
+                          }}
+                          className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left transition-colors duration-100 ${role === option.value ? "bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-200" : "text-stone-800 hover:bg-stone-50 dark:text-stone-100 dark:hover:bg-stone-800"}`}
+                        >
+                          <span><span className="block text-sm font-medium">{option.label}</span><span className="mt-0.5 block text-xs text-stone-500">{option.detail}</span></span>
+                          {role === option.value && <Check size={17} aria-hidden="true" />}
+                        </button>)}
+                      </div>}
+                    </div>
+                  </div>
                 </>
               )}
             </motion.div>
