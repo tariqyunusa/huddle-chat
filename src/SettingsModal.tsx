@@ -43,7 +43,7 @@ const SETTINGS_SECTIONS: SettingsSectionConfig[] = [
   },
   {
   id: "connectors",
-  label: "Connectors",
+  label: "Customize",
   icon: Plug,
   group: "Integrations",
   component: ConnectorsSettings,
