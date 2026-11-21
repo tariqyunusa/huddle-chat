@@ -426,7 +426,7 @@ function App() {
                   type="button"
                   onClick={() => openSession(s.id)}
                   aria-current={activeSessionId === s.id ? "page" : undefined}
-                  className="no-inset min-w-0 flex-1 rounded-lg px-3 py-2 text-left text-[14px] font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-stone-500"
+                  className="no-inset min-w-0 flex-1 rounded-lg px-3 py-2 text-left text-[14px] font-medium focus-visible:outline  focus-visible:outline-stone-500"
                 >
                   <span className="block truncate">
                     {s.title || "Untitled session"}
