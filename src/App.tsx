@@ -238,6 +238,12 @@ function App() {
     );
   }
 
+  const handleModelUpdate = useCallback((sessionId: string, modelId: string | null, modelName: string) => {
+    setSessions((prev) =>
+      prev.map((s) => s.id === sessionId ? { ...s, model_id: modelId, model_name: modelName } : s),
+    );
+  }, []);
+
   function handleSessionDeleted(sessionId: string) {
     setSessions((prev) => prev.filter((s) => s.id !== sessionId));
     if (activeSessionId === sessionId) {
@@ -521,6 +527,10 @@ function App() {
             <ChatView
               sessionId={activeSessionId}
               displayName={displayName}
+              isHost={sessions.find((s) => s.id === activeSessionId)?.created_by === userId}
+              modelId={sessions.find((s) => s.id === activeSessionId)?.model_id ?? null}
+              modelName={sessions.find((s) => s.id === activeSessionId)?.model_name ?? "Talon (Default)"}
+              onModelUpdate={handleModelUpdate}
               title={
                 sessions.find((s) => s.id === activeSessionId)?.title ?? null
               }

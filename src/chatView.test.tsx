@@ -24,15 +24,22 @@ class TestWebSocket {
 vi.mock("./api", () => ({
   BACKEND_HOST: "localhost",
   fetchParticipants: vi.fn().mockResolvedValue([]),
+  fetchModels: vi.fn().mockResolvedValue([
+    { id: "talon-default", display_name: "Talon (Default)", min_plan: "free" },
+  ]),
+  updateSessionModel: vi.fn(),
 }));
 
-function renderChat() {
+function renderChat(isHost = false) {
   return render(
     <ToastProvider>
       <ChatView
         sessionId="session-1"
         displayName="Alex"
         title="Design review"
+        isHost={isHost}
+        modelId={null}
+        modelName="Talon (Default)"
       />
     </ToastProvider>,
   );
@@ -101,5 +108,18 @@ describe("conversation scrolling", () => {
 
     await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
     expect(screen.queryByRole("button", { name: "Jump to latest" })).toBeNull();
+  });
+});
+
+describe("session model control", () => {
+  it("shows a model selector to the host", async () => {
+    renderChat(true);
+    expect(await screen.findByRole("combobox", { name: "Talon model" })).toBeVisible();
+  });
+
+  it("shows a read-only model label to other participants", () => {
+    renderChat(false);
+    expect(screen.getByText("Talon (Default)")).toBeVisible();
+    expect(screen.queryByRole("combobox", { name: "Talon model" })).toBeNull();
   });
 });
