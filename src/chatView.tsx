@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BACKEND_HOST, fetchParticipants, type Participant } from "./api";
+import { BACKEND_HOST, fetchModels, fetchParticipants, updateSessionModel, type ModelOption, type Participant } from "./api";
 import {
   Plus,
   GitCompareArrows,
@@ -30,6 +30,10 @@ type ChatMessage = {
 type ChatViewProps = {
   sessionId: string;
   displayName: string;
+  isHost: boolean;
+  modelId: string | null;
+  modelName: string;
+  onModelUpdate?: (sessionId: string, modelId: string | null, modelName: string) => void;
   title: string | null;
   onTitleUpdate?: (sessionId: string, title: string) => void;
   onUsageUpdate?: (tokensUsed: number, tokensLimit: number) => void;
@@ -166,6 +170,10 @@ function Avatar({ name }: { name: string }) {
 export default function ChatView({
   sessionId,
   displayName,
+  isHost,
+  modelId,
+  modelName,
+  onModelUpdate,
   title,
   onTitleUpdate,
   onUsageUpdate,
@@ -176,6 +184,8 @@ export default function ChatView({
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const attachmentsRef = useRef<Attachment[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [models, setModels] = useState<ModelOption[]>([]);
+  const [modelSaving, setModelSaving] = useState(false);
   const [thinking, setThinking] = useState(false);
   const [statusLabel, setStatusLabel] = useState<string | null>(null);
   const [memorySaving, setMemorySaving] = useState(false);
@@ -265,6 +275,11 @@ export default function ChatView({
         return;
       }
 
+      if (data.type === "model_changed") {
+        onModelUpdate?.(sessionId, data.model_id, data.model_name);
+        return;
+      }
+
       if (data.type === "usage") {
         onUsageUpdate?.(data.tokens_used, data.tokens_limit);
         return;
@@ -290,7 +305,25 @@ export default function ChatView({
     };
 
     return () => ws.close();
-  }, [sessionId, displayName]);
+  }, [sessionId, displayName, onModelUpdate]);
+
+  useEffect(() => {
+    fetchModels()
+      .then(setModels)
+      .catch(() => showToast("error", "Couldn't load available models."));
+  }, [sessionId]);
+
+  async function handleModelChange(nextModelId: string) {
+    setModelSaving(true);
+    try {
+      const session = await updateSessionModel(sessionId, nextModelId);
+      onModelUpdate?.(sessionId, session.model_id, session.model_name);
+    } catch (error) {
+      showToast("error", error instanceof Error ? error.message : "Couldn't change the session model.");
+    } finally {
+      setModelSaving(false);
+    }
+  }
 
   useEffect(() => {
     if (!attachMenuOpen) return;
@@ -683,6 +716,26 @@ export default function ChatView({
                 <CornerDownLeft size={16} />
               </button>
             </div>
+          </div>
+          <div className="mt-2 flex w-full min-w-0 justify-end">
+            {isHost ? (
+              <select
+                aria-label="Talon model"
+                value={modelId ?? "talon-default"}
+                disabled={modelSaving}
+                onChange={(event) => void handleModelChange(event.target.value)}
+                className="w-full max-w-40 min-w-0 rounded-lg border border-stone-200 bg-white px-2 py-1.5 text-xs text-stone-700 disabled:opacity-60 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200"
+              >
+                {!models.some((model) => model.id === (modelId ?? "talon-default")) && (
+                  <option value={modelId ?? "talon-default"}>{modelName}</option>
+                )}
+                {models.map((model) => (
+                  <option key={model.id} value={model.id}>{model.display_name}</option>
+                ))}
+              </select>
+            ) : (
+              <span className="max-w-40 truncate text-xs text-stone-500" aria-label="Talon model">{modelName}</span>
+            )}
           </div>
         </div>
       </div>

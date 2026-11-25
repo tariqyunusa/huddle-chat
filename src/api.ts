@@ -59,8 +59,16 @@ export async function removeRepo(sessionId: string, repoId: string): Promise<voi
 export type SessionSummary = {
   id: string;
   title: string | null;
+  model_id?: string | null;
+  model_name?: string;
   created_by: string;
   created_at: string;
+};
+
+export type ModelOption = {
+  id: string;
+  display_name: string;
+  min_plan: "free" | "standard" | "pro";
 };
 
 export type Participant = {
@@ -288,6 +296,28 @@ export async function createSession(title: string): Promise<SessionSummary> {
     body: JSON.stringify({ title }),
   });
   if (!res.ok) throw new Error(`Failed to create session: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchModels(): Promise<ModelOption[]> {
+  const res = await apiFetch("/models");
+  if (!res.ok) throw new Error(`Failed to fetch models: ${res.status}`);
+  return res.json();
+}
+
+export async function updateSessionModel(
+  sessionId: string,
+  modelId: string,
+): Promise<SessionSummary & { model_id: string | null; model_name: string }> {
+  const res = await apiFetch(`/sessions/${sessionId}/model`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model_id: modelId }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.detail ?? "Couldn't change the session model");
+  }
   return res.json();
 }
 
