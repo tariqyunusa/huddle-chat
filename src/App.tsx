@@ -18,6 +18,7 @@ import {
   ChevronUp,
   ChevronDown,
   Plus,
+  FolderKanban,
 } from "lucide-react";
 import SessionMenu from "./SessionMenu";
 import { AnimatePresence } from "motion/react";
@@ -31,6 +32,7 @@ import BillingModal from "./BillingModal";
 import BillingCallbackPage from "./BillingCallbackPage";
 import SettingsModal from "./SettingsModal";
 import OnboardingInviteScreen from "./OnboardingInviteScreen";
+import ProjectsView from "./ProjectsView";
 
 function getSessionFromUrl(): string | null {
   const params = new URLSearchParams(window.location.search);
@@ -75,6 +77,8 @@ function App() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(
     getSessionFromUrl(),
   );
+  const [projectsOpen, setProjectsOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const showToast = useToast();
   useEffect(() => {
     if (window.location.pathname !== "/auth/callback") return;
@@ -227,6 +231,7 @@ function App() {
 
   function openSession(id: string) {
     setActiveSessionId(id);
+    setProjectsOpen(false);
     const url = new URL(window.location.href);
     url.searchParams.set("session", id);
     window.history.pushState({}, "", url);
@@ -254,11 +259,11 @@ function App() {
     }
   }
 
-  async function handleCreateSession() {
+  async function handleCreateSession(projectId?: string) {
     if (!userId) return;
     setCreating(true);
     try {
-      const newSession = await createSession("New session");
+      const newSession = await createSession("New session", projectId);
       setSessions((prev) => [newSession, ...prev]);
       openSession(newSession.id);
     } catch (err) {
@@ -266,6 +271,15 @@ function App() {
     } finally {
       setCreating(false);
     }
+  }
+
+  function openProjects() {
+    setProjectsOpen(true);
+    setSidebarOpen(false);
+    setActiveSessionId(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("session");
+    window.history.pushState({}, "", url);
   }
 
   if (window.location.pathname === "/reset-password" && resetToken) {
@@ -399,7 +413,7 @@ function App() {
 
           <div className="px-3 py-3">
             <button
-              onClick={handleCreateSession}
+              onClick={() => void handleCreateSession()}
               disabled={creating}
               className="button-press no-inset w-full flex items-center gap-2 rounded-lg cursor-pointer px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-200 transition-colors disabled:opacity-50"
             >
@@ -407,6 +421,17 @@ function App() {
                 +
               </div>
               {creating ? "Creating…" : "New"}
+            </button>
+          </div>
+
+          <div className="px-2 pb-2">
+            <button
+              type="button"
+              onClick={openProjects}
+              aria-current={projectsOpen ? "page" : undefined}
+              className={`no-inset flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors ${projectsOpen ? "bg-stone-200 text-stone-900" : "text-stone-600 hover:bg-stone-100"}`}
+            >
+              <FolderKanban size={16} /> Projects
             </button>
           </div>
 
@@ -481,13 +506,21 @@ function App() {
               <ListSortDescending size={16} />
             </button>
             <button
-              onClick={handleCreateSession}
+              onClick={() => void handleCreateSession()}
               disabled={creating}
               aria-label="New session"
               title="New session"
               className="composer-btn no-inset flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors disabled:opacity-50"
             >
               <Plus size={16} />
+            </button>
+            <button
+              onClick={openProjects}
+              aria-label="Projects"
+              title="Projects"
+              className="composer-btn no-inset flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors"
+            >
+              <FolderKanban size={16} />
             </button>
           </div>
         )}
@@ -519,11 +552,18 @@ function App() {
           >
             <Menu size={20} />
           </button>
-          <span className="text-sm font-medium text-stone-700">Huddle</span>
+          <span className="text-sm font-medium text-stone-700">{projectsOpen ? "Projects" : "Huddle"}</span>
         </div>
 
         <main className="flex-1 flex flex-col">
-          {activeSessionId ? (
+          {projectsOpen ? (
+            <ProjectsView
+              selectedProjectId={selectedProjectId}
+              onSelectProject={setSelectedProjectId}
+              onOpenSession={openSession}
+              onCreateSession={async (projectId) => handleCreateSession(projectId)}
+            />
+          ) : activeSessionId ? (
             <ChatView
               sessionId={activeSessionId}
               displayName={displayName}
@@ -556,7 +596,7 @@ function App() {
                 together.
               </p>
               <button
-                onClick={handleCreateSession}
+                onClick={() => void handleCreateSession()}
                 disabled={creating}
                 className="button-press new-session-button rounded-lg px-5 py-2.5 text-sm cursor-pointer font-medium hover:bg-stone-900 transition-colors disabled:opacity-50"
               >
