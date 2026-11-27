@@ -65,6 +65,19 @@ export type SessionSummary = {
   created_at: string;
 };
 
+export type ProjectSession = Pick<SessionSummary, "id" | "title" | "created_at">;
+
+export type ProjectSummary = {
+  id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  session_count: number;
+};
+
+export type ProjectDetail = ProjectSummary & { sessions: ProjectSession[] };
+
 export type ModelOption = {
   id: string;
   display_name: string;
@@ -289,14 +302,74 @@ export async function fetchSessions(): Promise<SessionSummary[]> {
   return res.json();
 }
 
-export async function createSession(title: string): Promise<SessionSummary> {
+export async function createSession(
+  title: string,
+  projectId?: string,
+): Promise<SessionSummary> {
   const res = await apiFetch("/sessions", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title }),
+    body: JSON.stringify({ title, ...(projectId ? { project_id: projectId } : {}) }),
   });
-  if (!res.ok) throw new Error(`Failed to create session: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.detail ?? `Failed to create session: ${res.status}`);
+  }
   return res.json();
+}
+
+export async function fetchProjects(): Promise<ProjectSummary[]> {
+  const res = await apiFetch("/projects");
+  if (!res.ok) throw new Error(`Couldn't load projects (${res.status})`);
+  return res.json();
+}
+
+export async function fetchProject(projectId: string): Promise<ProjectDetail> {
+  const res = await apiFetch(`/projects/${encodeURIComponent(projectId)}`);
+  if (!res.ok) throw new Error(`Couldn't load project (${res.status})`);
+  return res.json();
+}
+
+export async function createProject(payload: {
+  name: string;
+  description: string | null;
+}): Promise<ProjectSummary> {
+  const res = await apiFetch("/projects", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.detail ?? "Couldn't create project");
+  }
+  return res.json();
+}
+
+export async function updateProject(
+  projectId: string,
+  payload: { name: string; description: string | null },
+): Promise<ProjectSummary> {
+  const res = await apiFetch(`/projects/${encodeURIComponent(projectId)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.detail ?? "Couldn't update project");
+  }
+  return res.json();
+}
+
+export async function deleteProject(projectId: string): Promise<void> {
+  const res = await apiFetch(`/projects/${encodeURIComponent(projectId)}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.detail ?? "Couldn't delete project");
+  }
 }
 
 export async function fetchModels(): Promise<ModelOption[]> {
